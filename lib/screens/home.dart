@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../globs/activeuser.dart';
+import '../models/app_preferences.dart';
 import '../models/shopping_history_entry.dart';
+import '../services/currency_service.dart';
 import '../services/shopping_history_repository.dart';
+import '../services/user_preferences.dart';
+import '../widgets/trolly_bottom_navigation.dart';
 
 const _trollyGreen = Color(0xFF16A34A);
 const _trollyMint = Color(0xFFE3F5EA);
@@ -12,9 +16,11 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     this.repository = const ShoppingHistoryRepository(),
+    this.userPreferences = const UserPreferences(),
   });
 
   final ShoppingHistoryRepository repository;
+  final UserPreferences userPreferences;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -23,6 +29,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<ShoppingHistoryEntry> _entries = [];
   bool _isLoading = true;
+  TrollyCurrency _displayCurrency = TrollyCurrency.php;
 
   @override
   void initState() {
@@ -31,13 +38,33 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadHistory() async {
-    final entries = await widget.repository.loadEntries();
+    final results = await Future.wait<Object>([
+      widget.repository.loadEntries(),
+      widget.userPreferences.readCurrency(),
+    ]);
     if (!mounted) return;
 
     setState(() {
-      _entries = entries;
+      _entries = results[0] as List<ShoppingHistoryEntry>;
+      _displayCurrency = results[1] as TrollyCurrency;
       _isLoading = false;
     });
+  }
+
+  Future<void> _openSettings() async {
+    final changed = await Navigator.of(context).pushNamed('/settings');
+    if (!mounted || changed != true) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+    await _loadHistory();
+  }
+
+  void _handleNavigation(TrollyNavItem item) {
+    if (item == TrollyNavItem.settings) {
+      _openSettings();
+    }
   }
 
   @override
@@ -49,7 +76,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final displayName = name == null || name.isEmpty ? 'there' : name;
     final totalCentavos = _entries.fold<int>(
       0,
-      (total, entry) => total + entry.totalCentavos,
+      (total, entry) =>
+          total +
+          CurrencyService.convertMinorUnits(
+            entry.totalCentavos,
+            entry.currency,
+            _displayCurrency,
+          ),
     );
 
     return Scaffold(
@@ -112,7 +145,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     : _buildHistoryList(uiScale),
               ),
               SizedBox(height: 10 * uiScale),
-              _buildBottomNavigation(uiScale),
+              TrollyBottomNavigation(
+                activeItem: TrollyNavItem.home,
+                onItemTap: _handleNavigation,
+                uiScale: uiScale,
+              ),
             ],
           ),
         ),
@@ -151,7 +188,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 SizedBox(height: 2 * uiScale),
                 Text(
-                  _formatPesos(totalCentavos),
+                  CurrencyService.formatMinorUnits(
+                    totalCentavos,
+                    _displayCurrency,
+                  ),
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 12 * uiScale,
@@ -275,7 +315,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               Text(
-                _formatPesos(entry.totalCentavos),
+                CurrencyService.formatMinorUnits(
+                  CurrencyService.convertMinorUnits(
+                    entry.totalCentavos,
+                    entry.currency,
+                    _displayCurrency,
+                  ),
+                  _displayCurrency,
+                ),
                 style: TextStyle(
                   color: _trollyOrange,
                   fontSize: 9 * uiScale,
@@ -288,80 +335,6 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-
-  Widget _buildBottomNavigation(double uiScale) {
-    return Container(
-      height: 40 * uiScale,
-      padding: EdgeInsets.symmetric(horizontal: 4 * uiScale),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFD8D8D8)),
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Row(
-        children: [
-          _buildNavigationItem(
-            icon: Icons.home_rounded,
-            label: 'Home',
-            active: true,
-            uiScale: uiScale,
-          ),
-          _buildNavigationItem(
-            icon: Icons.shopping_cart_outlined,
-            label: 'Shop',
-            uiScale: uiScale,
-          ),
-          _buildNavigationItem(
-            icon: Icons.settings_outlined,
-            label: 'Settings',
-            uiScale: uiScale,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavigationItem({
-    required IconData icon,
-    required String label,
-    bool active = false,
-    required double uiScale,
-  }) {
-    final color = active ? _trollyGreen : Colors.black45;
-
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 19 * uiScale, color: color),
-          SizedBox(height: 1 * uiScale),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 7 * uiScale,
-              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-              height: 1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-String _formatPesos(int totalCentavos) {
-  final pesos = totalCentavos ~/ 100;
-  final centavos = totalCentavos.abs() % 100;
-  final groupedPesos = pesos.toString().replaceAllMapped(
-    RegExp(r'\B(?=(\d{3})+(?!\d))'),
-    (match) => ',',
-  );
-
-  if (totalCentavos == 0 || centavos != 0) {
-    return '₱$groupedPesos.${centavos.toString().padLeft(2, '0')}';
-  }
-  return '₱$groupedPesos';
 }
 
 String _formatDate(DateTime date) {

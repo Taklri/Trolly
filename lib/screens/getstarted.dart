@@ -1,28 +1,45 @@
 import 'package:flutter/material.dart';
+
 import '../globs/activeuser.dart';
+import '../services/user_preferences.dart';
 
 class GetStartedScreen extends StatefulWidget {
-  const GetStartedScreen({super.key});
+  const GetStartedScreen({
+    super.key,
+    this.userPreferences = const UserPreferences(),
+  });
+
+  final UserPreferences userPreferences;
 
   @override
   State<GetStartedScreen> createState() => GetStartedPage();
 }
 
 class GetStartedPage extends State<GetStartedScreen> {
-  TextEditingController nameController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
   String err = '';
 
-  void getStarted() {
-    String name = nameController.text;
+  @override
+  void dispose() {
+    nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> getStarted() async {
+    final name = nameController.text.trim();
 
     if (name.isEmpty) {
       setState(() {
         err = 'Please enter your name.';
       });
-    } else {
-      ActiveUser.activeUser = {'fullname': name};
-      Navigator.pushReplacementNamed(context, '/home');
+      return;
     }
+
+    await widget.userPreferences.saveName(name);
+    if (!mounted) return;
+
+    ActiveUser.activeUser = {'fullname': name};
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
