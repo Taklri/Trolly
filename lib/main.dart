@@ -1,28 +1,13 @@
 import 'package:flutter/material.dart';
-
 import 'screens/getstarted.dart';
 import 'screens/home.dart';
-import 'services/user_preferences.dart';
-import 'theme/trolly_colors.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  const userPreferences = UserPreferences();
-  final savedName = await userPreferences.readName();
-
-  runApp(TrollyApp(savedName: savedName, userPreferences: userPreferences));
+void main() {
+  runApp(const TrollyApp());
 }
 
 class TrollyApp extends StatelessWidget {
-  const TrollyApp({
-    super.key,
-    this.savedName,
-    this.userPreferences = const UserPreferences(),
-  });
-
-  final String? savedName;
-  final UserPreferences userPreferences;
+  const TrollyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,13 +15,13 @@ class TrollyApp extends StatelessWidget {
       title: 'Trolly',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: kTrollyGreen),
-        scaffoldBackgroundColor: Colors.white,
-        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
       ),
-      home: savedName == null
-          ? GetStartedScreen(userPreferences: userPreferences)
-          : HomeScreen(userName: savedName!),
+      routes: {
+        '/getstarted': (context) => GetStartedScreen(),
+        '/home': (context) => HomeScreen(),
+      },
+      home: GetStartedScreen(),
     );
   }
 }
