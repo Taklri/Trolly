@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/getstarted.dart';
 import 'screens/home.dart';
+import 'screens/shop.dart';
 
 void main() {
   runApp(const TrollyApp());
@@ -20,6 +21,7 @@ class TrollyApp extends StatelessWidget {
       routes: {
         '/getstarted': (context) => GetStartedScreen(),
         '/home': (context) => HomeScreen(),
+        '/shop': (context) => const ShopPlaceholderScreen(),
       },
       home: GetStartedScreen(),
     );

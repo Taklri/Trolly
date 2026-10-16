@@ -60,6 +60,8 @@ flutter:
 
   assets:
     - assets/images/trolly.jpg
+    - assets/images/trolly-transparent.png
+    - assets/images/grocery.jpg
 
   # To add assets to your application, add an assets section, like this:
   # assets:
