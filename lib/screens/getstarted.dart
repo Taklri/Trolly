@@ -25,12 +25,49 @@ class GetStartedPage extends State<GetStartedScreen> {
     super.dispose();
   }
 
+  String lettersOnly(String value) {
+    const letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ';
+    var newValue = '';
+
+    for (var i = 0; i < value.length; i++) {
+      if (letters.contains(value[i]) && newValue.length < 10) {
+        newValue += value[i];
+      }
+    }
+
+    return newValue;
+  }
+
+  void nameChanged(String value) {
+    final newValue = lettersOnly(value);
+
+    if (nameController.text != newValue) {
+      nameController.value = TextEditingValue(
+        text: newValue,
+        selection: TextSelection.collapsed(offset: newValue.length),
+      );
+    }
+
+    if (err.isNotEmpty) {
+      setState(() {
+        err = '';
+      });
+    }
+  }
+
   Future<void> getStarted() async {
     final name = nameController.text.trim();
 
     if (name.isEmpty) {
       setState(() {
         err = 'Please enter your name.';
+      });
+      return;
+    }
+
+    if (name.length < 2) {
+      setState(() {
+        err = 'Name must have at least 2 letters.';
       });
       return;
     }
@@ -57,7 +94,7 @@ class GetStartedPage extends State<GetStartedScreen> {
                   Spacer(flex: 3),
                   Flexible(
                     flex: 4,
-                    child: Image.asset('assets/images/trolly.jpg', width: 350),
+                    child: Image.asset('assets/images/trolly.jpg', width: 300),
                   ),
                   SizedBox(height: 16),
                   Text('Welcome to', style: TextStyle(fontSize: 12)),
@@ -65,7 +102,7 @@ class GetStartedPage extends State<GetStartedScreen> {
                     'TROLLY',
                     style: TextStyle(
                       fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       color: Color(0xFF16A34A),
                     ),
                   ),
@@ -76,7 +113,10 @@ class GetStartedPage extends State<GetStartedScreen> {
                     height: 44,
                     child: TextField(
                       controller: nameController,
+                      maxLength: 10,
+                      onChanged: nameChanged,
                       decoration: InputDecoration(
+                        counterText: '',
                         contentPadding: EdgeInsets.symmetric(horizontal: 12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -88,7 +128,11 @@ class GetStartedPage extends State<GetStartedScreen> {
                       ),
                     ),
                   ),
-                  Text(err, style: TextStyle(color: Colors.red, fontSize: 12)),
+                  if (err.isNotEmpty)
+                    Text(
+                      err,
+                      style: TextStyle(color: Colors.red, fontSize: 12),
+                    ),
                   Spacer(flex: 2),
                   SizedBox(
                     width: 300,

@@ -75,6 +75,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     }
 
+    if (name.length < 2) {
+      setState(() {
+        _nameError = 'Name must have at least 2 letters.';
+      });
+      return;
+    }
+
     setState(() {
       _nameError = null;
       _isSavingName = true;
@@ -246,7 +253,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
           TextField(
             controller: _nameController,
             textInputAction: TextInputAction.done,
-            onChanged: (_) {
+            maxLength: 10,
+            onChanged: (value) {
+              const letters =
+                  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ';
+              var filtered = '';
+              for (var i = 0; i < value.length; i++) {
+                if (letters.contains(value[i]) && filtered.length < 10) {
+                  filtered += value[i];
+                }
+              }
+              if (_nameController.text != filtered) {
+                _nameController.value = TextEditingValue(
+                  text: filtered,
+                  selection: TextSelection.collapsed(offset: filtered.length),
+                );
+              }
               if (_nameError != null) {
                 setState(() {
                   _nameError = null;

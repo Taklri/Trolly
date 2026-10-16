@@ -11,7 +11,19 @@ class ShopPlaceholderScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: const Center(child: Text('Shopping flow coming soon.')),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Shopping flow coming soon.'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pushNamed('/on-the-go'),
+              child: const Text('Start On-the-Go Shopping'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

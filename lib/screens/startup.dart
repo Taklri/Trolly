@@ -32,7 +32,7 @@ class _StartupScreenState extends State<StartupScreen> {
       future: _savedName,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(backgroundColor: Colors.white);
+          return GetStartedScreen(userPreferences: widget.userPreferences);
         }
 
         final name = snapshot.data;
