@@ -12,12 +12,44 @@ class GetStartedPage extends State<GetStartedScreen> {
   TextEditingController nameController = TextEditingController();
   String err = '';
 
+  String lettersOnly(String value) {
+    String letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ';
+    String newValue = '';
+
+    for (int i = 0; i < value.length; i++) {
+      if (letters.contains(value[i]) && newValue.length < 10) {
+        newValue += value[i];
+      }
+    }
+
+    return newValue;
+  }
+
+  void nameChanged(String value) {
+    String newValue = lettersOnly(value);
+
+    if (nameController.text != newValue) {
+      nameController.value = TextEditingValue(
+        text: newValue,
+        selection: TextSelection.collapsed(offset: newValue.length),
+      );
+    }
+
+    setState(() {
+      err = '';
+    });
+  }
+
   void getStarted() {
-    String name = nameController.text;
+    String name = nameController.text.trim();
 
     if (name.isEmpty) {
       setState(() {
         err = 'Please enter your name.';
+      });
+    } else if (name.length < 2) {
+      setState(() {
+        err = 'Name must have at least 2 letters.';
       });
     } else {
       ActiveUser.activeUser = {'fullname': name};
@@ -34,7 +66,7 @@ class GetStartedPage extends State<GetStartedScreen> {
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 28),
             child: SizedBox(
-              width: 300,
+              width: 350,
               child: Column(
                 children: [
                   Spacer(flex: 3),
@@ -43,22 +75,32 @@ class GetStartedPage extends State<GetStartedScreen> {
                     child: Image.asset('assets/images/trolly.jpg', width: 350),
                   ),
                   SizedBox(height: 16),
-                  Text('Welcome to', style: TextStyle(fontSize: 12)),
+                  Text('Welcome to', style: TextStyle(fontSize: 20)),
                   Text(
                     'TROLLY',
                     style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 48,
+                      fontWeight: FontWeight.w700,
                       color: Color(0xFF16A34A),
                     ),
                   ),
                   SizedBox(height: 40),
-                  Text('Tell us your name:', style: TextStyle(fontSize: 12)),
+                  Text(
+                    'Tell us your name:',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
                   SizedBox(height: 6),
                   SizedBox(
-                    height: 44,
+                    height: 65,
                     child: TextField(
                       controller: nameController,
+                      textAlign: TextAlign.center,
+                      maxLength: 10,
+                      onChanged: nameChanged,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                      ),
                       decoration: InputDecoration(
                         contentPadding: EdgeInsets.symmetric(horizontal: 12),
                         border: OutlineInputBorder(
@@ -74,8 +116,8 @@ class GetStartedPage extends State<GetStartedScreen> {
                   Text(err, style: TextStyle(color: Colors.red, fontSize: 12)),
                   Spacer(flex: 2),
                   SizedBox(
-                    width: 300,
-                    height: 44,
+                    width: 900,
+                    height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF16A34A),
@@ -90,7 +132,7 @@ class GetStartedPage extends State<GetStartedScreen> {
                       },
                       child: Text(
                         "Let's Get Started",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
