@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../models/app_preferences.dart';
 import '../globs/shopping.dart';
 
 class AddProductScreen extends StatefulWidget {
@@ -196,7 +198,7 @@ class AddProductPage extends State<AddProductScreen> {
       filled: true,
       fillColor: Color(0xFFF5F5F5),
       isDense: true,
-      contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide.none,
@@ -213,7 +215,7 @@ class AddProductPage extends State<AddProductScreen> {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
@@ -221,7 +223,7 @@ class AddProductPage extends State<AddProductScreen> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
@@ -240,7 +242,7 @@ class AddProductPage extends State<AddProductScreen> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(24, 18, 24, 20),
+          padding: EdgeInsets.fromLTRB(24, 24, 24, 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -252,35 +254,35 @@ class AddProductPage extends State<AddProductScreen> {
                   padding: EdgeInsets.zero,
                   foregroundColor: Colors.grey[600],
                 ),
-                icon: Icon(Icons.arrow_back, size: 18),
-                label: Text('Back to Shopping', style: TextStyle(fontSize: 13)),
+                icon: Icon(Icons.arrow_back, size: 20),
+                label: Text('Back to Shopping', style: TextStyle(fontSize: 14)),
               ),
               Text(
                 ShoppingData.hasBudget ? 'Current Budget' : 'Total Spending',
-                style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                style: TextStyle(fontSize: 15, color: Colors.grey[700]),
               ),
               Divider(height: 8),
               Text(
-                '₱${ShoppingData.money(displayedAmount)}',
+                ShoppingData.currencyMoney(displayedAmount),
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 30,
                   fontWeight: FontWeight.w700,
                   color: ShoppingData.hasBudget && displayedAmount <= 0
                       ? Colors.red
                       : Colors.black,
                 ),
               ),
-              SizedBox(height: 26),
+              SizedBox(height: 30),
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Product Name:', style: TextStyle(fontSize: 14)),
-                      SizedBox(height: 7),
+                      Text('Product Name:', style: TextStyle(fontSize: 16)),
+                      SizedBox(height: 8),
                       TextField(
                         controller: productNameController,
-                        style: TextStyle(fontSize: 15),
+                        style: TextStyle(fontSize: 17),
                         onChanged: (value) {
                           fieldChanged('name', value);
                         },
@@ -289,38 +291,40 @@ class AddProductPage extends State<AddProductScreen> {
                       if (nameErr.isNotEmpty)
                         Text(
                           nameErr,
-                          style: TextStyle(color: Colors.red, fontSize: 12),
+                          style: TextStyle(color: Colors.red, fontSize: 13),
                         ),
-                      SizedBox(height: 16),
-                      Text('Product Price:', style: TextStyle(fontSize: 14)),
-                      SizedBox(height: 7),
+                      SizedBox(height: 18),
+                      Text('Product Price:', style: TextStyle(fontSize: 16)),
+                      SizedBox(height: 8),
                       SizedBox(
-                        width: 200,
+                        width: 220,
                         child: TextField(
                           controller: priceController,
-                          style: TextStyle(fontSize: 15),
+                          style: TextStyle(fontSize: 17),
                           onChanged: (value) {
                             fieldChanged('price', value);
                           },
                           keyboardType: TextInputType.numberWithOptions(
                             decimal: true,
                           ),
-                          decoration: fieldDecoration(prefixText: '₱ '),
+                          decoration: fieldDecoration(
+                            prefixText: '${ShoppingData.currency.symbol} ',
+                          ),
                         ),
                       ),
                       if (priceErr.isNotEmpty)
                         Text(
                           priceErr,
-                          style: TextStyle(color: Colors.red, fontSize: 12),
+                          style: TextStyle(color: Colors.red, fontSize: 13),
                         ),
-                      SizedBox(height: 16),
-                      Text('Quantity:', style: TextStyle(fontSize: 14)),
-                      SizedBox(height: 7),
+                      SizedBox(height: 18),
+                      Text('Quantity:', style: TextStyle(fontSize: 16)),
+                      SizedBox(height: 8),
                       SizedBox(
-                        width: 130,
+                        width: 150,
                         child: TextField(
                           controller: quantityController,
-                          style: TextStyle(fontSize: 15),
+                          style: TextStyle(fontSize: 17),
                           onChanged: (value) {
                             fieldChanged('quantity', value);
                           },
@@ -331,37 +335,39 @@ class AddProductPage extends State<AddProductScreen> {
                       if (quantityErr.isNotEmpty)
                         Text(
                           quantityErr,
-                          style: TextStyle(color: Colors.red, fontSize: 12),
+                          style: TextStyle(color: Colors.red, fontSize: 13),
                         ),
-                      SizedBox(height: 30),
+                      SizedBox(height: 32),
                       summaryRow(
                         'Product Price:',
-                        '₱${ShoppingData.money(double.tryParse(priceController.text.trim()) ?? 0)}',
+                        ShoppingData.currencyMoney(
+                          double.tryParse(priceController.text.trim()) ?? 0,
+                        ),
                       ),
                       summaryRow('Quantity:', quantityController.text),
                       Divider(),
                       summaryRow(
                         'Total Amount:',
-                        '₱${ShoppingData.money(total)}',
+                        ShoppingData.currencyMoney(total),
                         bold: true,
                       ),
                       if (ShoppingData.hasBudget)
                         summaryRow(
                           'Budget Left:',
-                          '₱${ShoppingData.money(projectedBudget())}',
+                          ShoppingData.currencyMoney(projectedBudget()),
                           bold: true,
                         )
                       else
                         summaryRow(
                           'Total Spending:',
-                          '₱${ShoppingData.money(projectedTotal())}',
+                          ShoppingData.currencyMoney(projectedTotal()),
                           bold: true,
                         ),
                       if (showWarning) ...[
                         SizedBox(height: 12),
                         Text(
                           'Your budget will be emptied. Do you want to proceed?',
-                          style: TextStyle(color: Colors.red, fontSize: 12),
+                          style: TextStyle(color: Colors.red, fontSize: 13),
                         ),
                       ],
                     ],
@@ -379,7 +385,7 @@ class AddProductPage extends State<AddProductScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xFF13AD58),
                           foregroundColor: Colors.white,
-                          minimumSize: Size(0, 48),
+                          minimumSize: Size(0, 52),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24),
                           ),
@@ -396,7 +402,7 @@ class AddProductPage extends State<AddProductScreen> {
                           });
                         },
                         style: OutlinedButton.styleFrom(
-                          minimumSize: Size(0, 48),
+                          minimumSize: Size(0, 52),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24),
                           ),
@@ -416,15 +422,15 @@ class AddProductPage extends State<AddProductScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF13AD58),
                       foregroundColor: Colors.white,
-                      minimumSize: Size(double.infinity, 52),
+                      minimumSize: Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(26),
+                        borderRadius: BorderRadius.circular(28),
                       ),
                     ),
                     child: Text(
                       'Add Product',
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

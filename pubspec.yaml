@@ -25,6 +25,7 @@ flutter:
     - assets/images/No Products.png
     - assets/images/trolly-transparent.png
     - assets/images/grocery.jpg
+    - assets/images/No Grocery List.png
 
   fonts:
     - family: Poppins

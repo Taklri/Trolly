@@ -1,16 +1,29 @@
 import 'package:flutter/material.dart';
+
 import '../globs/activeuser.dart';
+import '../services/user_preferences.dart';
 
 class GetStartedScreen extends StatefulWidget {
-  const GetStartedScreen({super.key});
+  const GetStartedScreen({
+    super.key,
+    this.userPreferences = const UserPreferences(),
+  });
+
+  final UserPreferences userPreferences;
 
   @override
   State<GetStartedScreen> createState() => GetStartedPage();
 }
 
 class GetStartedPage extends State<GetStartedScreen> {
-  TextEditingController nameController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
   String err = '';
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    super.dispose();
+  }
 
   String lettersOnly(String value) {
     String letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ';
@@ -35,26 +48,29 @@ class GetStartedPage extends State<GetStartedScreen> {
       );
     }
 
-    setState(() {
-      err = '';
-    });
+    if (err.isNotEmpty) setState(() => err = '');
   }
 
-  void getStarted() {
-    String name = nameController.text.trim();
+  Future<void> getStarted() async {
+    final name = nameController.text.trim();
 
     if (name.isEmpty) {
       setState(() {
         err = 'Please enter your name.';
       });
+      return;
     } else if (name.length < 2) {
       setState(() {
         err = 'Name must have at least 2 letters.';
       });
-    } else {
-      ActiveUser.activeUser = {'fullname': name};
-      Navigator.pushReplacementNamed(context, '/home');
+      return;
     }
+
+    await widget.userPreferences.saveName(name);
+    if (!mounted) return;
+
+    ActiveUser.activeUser = {'fullname': name};
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
@@ -64,7 +80,7 @@ class GetStartedPage extends State<GetStartedScreen> {
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 28),
+            padding: const EdgeInsets.fromLTRB(28, 24, 28, 22),
             child: SizedBox(
               width: 350,
               child: Column(
@@ -74,24 +90,24 @@ class GetStartedPage extends State<GetStartedScreen> {
                     flex: 4,
                     child: Image.asset('assets/images/trolly.jpg', width: 350),
                   ),
-                  SizedBox(height: 16),
-                  Text('Welcome to', style: TextStyle(fontSize: 20)),
+                  const SizedBox(height: 16),
+                  const Text('Welcome to', style: TextStyle(fontSize: 22)),
                   Text(
                     'TROLLY',
                     style: TextStyle(
-                      fontSize: 48,
+                      fontSize: 50,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF16A34A),
                     ),
                   ),
-                  SizedBox(height: 40),
-                  Text(
+                  const SizedBox(height: 40),
+                  const Text(
                     'Tell us your name:',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
                   ),
-                  SizedBox(height: 6),
+                  const SizedBox(height: 6),
                   SizedBox(
-                    height: 65,
+                    height: 70,
                     child: TextField(
                       controller: nameController,
                       textAlign: TextAlign.center,
@@ -99,32 +115,39 @@ class GetStartedPage extends State<GetStartedScreen> {
                       onChanged: nameChanged,
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        fontSize: 20,
+                        fontSize: 21,
                       ),
                       decoration: InputDecoration(
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                        counterText: '',
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.black26),
+                          borderSide: const BorderSide(color: Colors.black26),
                         ),
                       ),
                     ),
                   ),
-                  Text(err, style: TextStyle(color: Colors.red, fontSize: 12)),
-                  Spacer(flex: 2),
+                  if (err.isNotEmpty)
+                    Text(
+                      err,
+                      style: const TextStyle(color: Colors.red, fontSize: 13),
+                    ),
+                  const Spacer(flex: 2),
                   SizedBox(
-                    width: 900,
-                    height: 50,
+                    width: double.infinity,
+                    height: 56,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF16A34A),
+                        backgroundColor: const Color(0xFF16A34A),
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(28),
                         ),
                       ),
                       onPressed: () {
@@ -132,11 +155,14 @@ class GetStartedPage extends State<GetStartedScreen> {
                       },
                       child: Text(
                         "Let's Get Started",
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
-                  SizedBox(height: 28),
+                  const SizedBox(height: 6),
                 ],
               ),
             ),
