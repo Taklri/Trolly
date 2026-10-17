@@ -64,7 +64,7 @@ class GetStartedPage extends State<GetStartedScreen> {
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 28),
+            padding: EdgeInsets.fromLTRB(28, 24, 28, 22),
             child: SizedBox(
               width: 350,
               child: Column(
@@ -75,11 +75,11 @@ class GetStartedPage extends State<GetStartedScreen> {
                     child: Image.asset('assets/images/trolly.jpg', width: 350),
                   ),
                   SizedBox(height: 16),
-                  Text('Welcome to', style: TextStyle(fontSize: 20)),
+                  Text('Welcome to', style: TextStyle(fontSize: 22)),
                   Text(
                     'TROLLY',
                     style: TextStyle(
-                      fontSize: 48,
+                      fontSize: 50,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF16A34A),
                     ),
@@ -87,11 +87,11 @@ class GetStartedPage extends State<GetStartedScreen> {
                   SizedBox(height: 40),
                   Text(
                     'Tell us your name:',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
                   ),
                   SizedBox(height: 6),
                   SizedBox(
-                    height: 65,
+                    height: 70,
                     child: TextField(
                       controller: nameController,
                       textAlign: TextAlign.center,
@@ -99,7 +99,7 @@ class GetStartedPage extends State<GetStartedScreen> {
                       onChanged: nameChanged,
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        fontSize: 20,
+                        fontSize: 21,
                       ),
                       decoration: InputDecoration(
                         contentPadding: EdgeInsets.symmetric(horizontal: 12),
@@ -113,18 +113,18 @@ class GetStartedPage extends State<GetStartedScreen> {
                       ),
                     ),
                   ),
-                  Text(err, style: TextStyle(color: Colors.red, fontSize: 12)),
+                  Text(err, style: TextStyle(color: Colors.red, fontSize: 13)),
                   Spacer(flex: 2),
                   SizedBox(
                     width: 900,
-                    height: 50,
+                    height: 56,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF16A34A),
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(28),
                         ),
                       ),
                       onPressed: () {
@@ -132,11 +132,14 @@ class GetStartedPage extends State<GetStartedScreen> {
                       },
                       child: Text(
                         "Let's Get Started",
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
-                  SizedBox(height: 28),
+                  SizedBox(height: 6),
                 ],
               ),
             ),

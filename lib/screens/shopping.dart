@@ -17,6 +17,43 @@ class ShoppingPage extends State<ShoppingScreen> {
     });
   }
 
+  void confirmDelete(int index) {
+    String productName = ShoppingData.currentProducts[index]['productName']
+        .toString();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            'Delete Product?',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          content: Text('Are you sure you want to delete $productName?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                deleteProduct(index);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void editProduct(int index) {
     Navigator.pushReplacementNamed(context, '/edit-product', arguments: index);
   }
@@ -41,14 +78,14 @@ class ShoppingPage extends State<ShoppingScreen> {
 
     return Container(
       margin: EdgeInsets.only(bottom: 14),
-      constraints: BoxConstraints(minHeight: 90),
+      constraints: BoxConstraints(minHeight: 96),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: Color(0xFFD3D3D3)),
         borderRadius: BorderRadius.circular(22),
       ),
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         child: Row(
           children: [
             Expanded(
@@ -57,13 +94,13 @@ class ShoppingPage extends State<ShoppingScreen> {
                 children: [
                   Text(
                     product['productName'],
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
                   ),
                   Text(
                     '- ₱${ShoppingData.money(total)}',
                     style: TextStyle(
                       color: Color(0xFFFF3B30),
-                      fontSize: 15,
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -76,17 +113,17 @@ class ShoppingPage extends State<ShoppingScreen> {
               },
               padding: EdgeInsets.all(10),
               constraints: BoxConstraints(),
-              iconSize: 22,
+              iconSize: 24,
               icon: Icon(Icons.edit, color: Color(0xFFFF9800)),
             ),
             SizedBox(width: 8),
             IconButton(
               onPressed: () {
-                deleteProduct(index);
+                confirmDelete(index);
               },
               padding: EdgeInsets.all(10),
               constraints: BoxConstraints(),
-              iconSize: 21,
+              iconSize: 23,
               icon: Icon(Icons.delete, color: Color(0xFFFF3B30)),
             ),
           ],
@@ -103,7 +140,7 @@ class ShoppingPage extends State<ShoppingScreen> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(24, 18, 24, 20),
+          padding: EdgeInsets.fromLTRB(24, 24, 24, 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -115,17 +152,17 @@ class ShoppingPage extends State<ShoppingScreen> {
                   padding: EdgeInsets.zero,
                   foregroundColor: Colors.grey[600],
                 ),
-                icon: Icon(Icons.arrow_back, size: 18),
-                label: Text('Back to Method', style: TextStyle(fontSize: 13)),
+                icon: Icon(Icons.arrow_back, size: 20),
+                label: Text('Back to Method', style: TextStyle(fontSize: 14)),
               ),
               Text(
                 'Shop Well!',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
               ),
               SizedBox(height: 6),
               Text(
                 ShoppingData.hasBudget ? 'Current Budget' : 'Total Spending',
-                style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                style: TextStyle(fontSize: 15, color: Colors.grey[700]),
               ),
               Divider(height: 8),
               Text(
@@ -133,7 +170,7 @@ class ShoppingPage extends State<ShoppingScreen> {
                     ? '₱${ShoppingData.money(budgetLeft)}'
                     : '₱${ShoppingData.money(total)}',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 30,
                   fontWeight: FontWeight.w700,
                   color: ShoppingData.hasBudget && budgetLeft <= 0
                       ? Colors.red
@@ -143,30 +180,17 @@ class ShoppingPage extends State<ShoppingScreen> {
               if (ShoppingData.hasBudget && budgetLeft <= 0)
                 Text(
                   'Your budget has been emptied. Review your shopping before finishing.',
-                  style: TextStyle(color: Colors.red, fontSize: 12),
+                  style: TextStyle(color: Colors.red, fontSize: 13),
                 ),
               if (err.isNotEmpty)
-                Text(err, style: TextStyle(color: Colors.red, fontSize: 12)),
-              SizedBox(height: 12),
+                Text(err, style: TextStyle(color: Colors.red, fontSize: 13)),
+              SizedBox(height: 16),
               Expanded(
                 child: ShoppingData.currentProducts.isEmpty
                     ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Image.asset(
-                              'assets/images/No Products.png',
-                              width: 220,
-                            ),
-                            Text(
-                              'No Product yet',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                          ],
+                        child: Image.asset(
+                          'assets/images/No Products.png',
+                          width: 240,
                         ),
                       )
                     : ListView.builder(
@@ -185,7 +209,7 @@ class ShoppingPage extends State<ShoppingScreen> {
                       onPressed: () {
                         cancelShopping();
                       },
-                      iconSize: 27,
+                      iconSize: 29,
                       icon: Icon(Icons.arrow_back, color: Color(0xFFFFA000)),
                     ),
                     FloatingActionButton(
@@ -195,13 +219,13 @@ class ShoppingPage extends State<ShoppingScreen> {
                       onPressed: () {
                         Navigator.pushReplacementNamed(context, '/add-product');
                       },
-                      child: Icon(Icons.add, size: 28),
+                      child: Icon(Icons.add, size: 30),
                     ),
                     IconButton(
                       onPressed: () {
                         finishShopping();
                       },
-                      iconSize: 27,
+                      iconSize: 29,
                       icon: Icon(Icons.flag_outlined, color: Color(0xFFFFA000)),
                     ),
                   ],

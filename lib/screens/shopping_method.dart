@@ -97,7 +97,7 @@ class ShoppingMethodPage extends State<ShoppingMethodScreen> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(24, 18, 24, 20),
+          padding: EdgeInsets.fromLTRB(24, 24, 24, 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -109,14 +109,14 @@ class ShoppingMethodPage extends State<ShoppingMethodScreen> {
                   padding: EdgeInsets.zero,
                   foregroundColor: Colors.grey[600],
                 ),
-                icon: Icon(Icons.arrow_back, size: 18),
-                label: Text('Back to Home', style: TextStyle(fontSize: 13)),
+                icon: Icon(Icons.arrow_back, size: 20),
+                label: Text('Back to Home', style: TextStyle(fontSize: 14)),
               ),
               Expanded(
                 child: Center(
                   child: SingleChildScrollView(
                     child: SizedBox(
-                      width: 340,
+                      width: 350,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -124,21 +124,21 @@ class ShoppingMethodPage extends State<ShoppingMethodScreen> {
                             'On the Go Shopping',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: 30,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          SizedBox(height: 28),
+                          SizedBox(height: 32),
                           Text(
                             'How much is your budget?',
-                            style: TextStyle(fontSize: 15),
+                            style: TextStyle(fontSize: 16),
                           ),
                           SizedBox(height: 10),
                           TextField(
                             controller: budgetController,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 20,
                               fontWeight: FontWeight.w500,
                             ),
                             onChanged: budgetChanged,
@@ -151,7 +151,7 @@ class ShoppingMethodPage extends State<ShoppingMethodScreen> {
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(
                                 horizontal: 14,
-                                vertical: 17,
+                                vertical: 18,
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -179,10 +179,10 @@ class ShoppingMethodPage extends State<ShoppingMethodScreen> {
                             Text(
                               err,
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.red, fontSize: 12),
+                              style: TextStyle(color: Colors.red, fontSize: 13),
                             ),
                           ],
-                          SizedBox(height: 26),
+                          SizedBox(height: 30),
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
@@ -192,15 +192,15 @@ class ShoppingMethodPage extends State<ShoppingMethodScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Color(0xFF13AD58),
                                 foregroundColor: Colors.white,
-                                minimumSize: Size(double.infinity, 52),
+                                minimumSize: Size(double.infinity, 56),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(26),
+                                  borderRadius: BorderRadius.circular(28),
                                 ),
                               ),
                               child: Text(
                                 'Continue',
                                 style: TextStyle(
-                                  fontSize: 15,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -215,7 +215,7 @@ class ShoppingMethodPage extends State<ShoppingMethodScreen> {
                             ),
                             child: Text(
                               'Skip Budget',
-                              style: TextStyle(fontSize: 14),
+                              style: TextStyle(fontSize: 15),
                             ),
                           ),
                         ],

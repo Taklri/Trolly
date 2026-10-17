@@ -18,17 +18,17 @@ class ShoppingSummaryScreen extends StatelessWidget {
     double total = (product['totalAmount'] as num).toDouble();
 
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 10),
+      padding: EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
           Text(
             product['productName'],
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           SizedBox(width: 10),
           Expanded(child: Divider()),
           SizedBox(width: 10),
-          Text('₱${ShoppingData.money(total)}', style: TextStyle(fontSize: 14)),
+          Text('₱${ShoppingData.money(total)}', style: TextStyle(fontSize: 16)),
         ],
       ),
     );
@@ -42,12 +42,12 @@ class ShoppingSummaryScreen extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
           ),
           Text(
             value,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -61,7 +61,7 @@ class ShoppingSummaryScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(24, 18, 24, 20),
+          padding: EdgeInsets.fromLTRB(24, 24, 24, 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -73,23 +73,23 @@ class ShoppingSummaryScreen extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   foregroundColor: Colors.grey[600],
                 ),
-                icon: Icon(Icons.arrow_back, size: 18),
-                label: Text('Back to List', style: TextStyle(fontSize: 13)),
+                icon: Icon(Icons.arrow_back, size: 20),
+                label: Text('Back to List', style: TextStyle(fontSize: 14)),
               ),
               Text(
                 'Here’s your',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
               ),
               Text(
                 'grocery summary',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 30,
                   height: 0.95,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF13AD58),
                 ),
               ),
-              SizedBox(height: 30),
+              SizedBox(height: 32),
               Expanded(
                 child: ListView.builder(
                   itemCount: ShoppingData.currentProducts.length,
@@ -105,7 +105,7 @@ class ShoppingSummaryScreen extends StatelessWidget {
                   'Budget Left:',
                   '₱${ShoppingData.money(ShoppingData.budgetLeft())}',
                 ),
-              SizedBox(height: 22),
+              SizedBox(height: 26),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -115,14 +115,14 @@ class ShoppingSummaryScreen extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF13AD58),
                     foregroundColor: Colors.white,
-                    minimumSize: Size(double.infinity, 52),
+                    minimumSize: Size(double.infinity, 56),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(26),
+                      borderRadius: BorderRadius.circular(28),
                     ),
                   ),
                   child: Text(
                     'Finish Shopping',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

@@ -414,8 +414,20 @@ void main() {
     expect(find.text('Eggs'), findsNothing);
 
     await tester.tap(find.byIcon(Icons.delete));
-    await tester.pump();
-    expect(find.text('No Product yet'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('Delete Product?'), findsOneWidget);
+    expect(find.text('Are you sure you want to delete Bread?'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Bread'), findsOneWidget);
+    expect(ShoppingData.currentProducts.length, 1);
+
+    await tester.tap(find.byIcon(Icons.delete));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Image), findsOneWidget);
     expect(ShoppingData.currentProducts, isEmpty);
   });
 
@@ -507,6 +519,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('Start Shopping!'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Start Shopping!'));
     await tester.pumpAndSettle();
 

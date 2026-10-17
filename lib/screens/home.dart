@@ -42,8 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final uiScale = (MediaQuery.sizeOf(context).width / 270)
-        .clamp(1.0, 1.35)
+    final uiScale = (MediaQuery.sizeOf(context).width / 390)
+        .clamp(0.9, 1.1)
         .toDouble();
     final name = ActiveUser.activeUser['fullname']?.toString().trim();
     final displayName = name == null || name.isEmpty ? 'there' : name;
@@ -57,10 +57,10 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.fromLTRB(
-            10 * uiScale,
-            12 * uiScale,
-            10 * uiScale,
-            10 * uiScale,
+            24 * uiScale,
+            24 * uiScale,
+            24 * uiScale,
+            22 * uiScale,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -69,32 +69,32 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Hello $displayName!',
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: 13 * uiScale,
+                  fontSize: 28 * uiScale,
                   fontWeight: FontWeight.w800,
-                  height: 1.05,
+                  height: 1.1,
                 ),
               ),
-              SizedBox(height: 2 * uiScale),
+              SizedBox(height: 6 * uiScale),
               Text(
                 'Ready to shop? :)',
                 style: TextStyle(
                   color: Colors.black87,
-                  fontSize: 7 * uiScale,
-                  height: 1.1,
+                  fontSize: 15 * uiScale,
+                  height: 1.2,
                 ),
               ),
-              SizedBox(height: 8 * uiScale),
+              SizedBox(height: 22 * uiScale),
               _buildSpendingCard(totalCentavos, uiScale),
-              SizedBox(height: 15 * uiScale),
+              SizedBox(height: 28 * uiScale),
               Text(
                 'Shopping History',
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: 12 * uiScale,
+                  fontSize: 22 * uiScale,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              SizedBox(height: 7 * uiScale),
+              SizedBox(height: 12 * uiScale),
               Expanded(
                 child: _isLoading
                     ? const Center(
@@ -111,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ? _buildEmptyState(context, uiScale)
                     : _buildHistoryList(uiScale),
               ),
-              SizedBox(height: 10 * uiScale),
+              SizedBox(height: 16 * uiScale),
               _buildBottomNavigation(uiScale),
             ],
           ),
@@ -122,17 +122,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSpendingCard(int totalCentavos, double uiScale) {
     return Container(
-      height: 55 * uiScale,
+      height: 120 * uiScale,
       padding: EdgeInsets.fromLTRB(
-        9 * uiScale,
-        7 * uiScale,
-        7 * uiScale,
-        7 * uiScale,
+        20 * uiScale,
+        16 * uiScale,
+        14 * uiScale,
+        16 * uiScale,
       ),
       decoration: BoxDecoration(
         color: _trollyMint,
         border: Border.all(color: const Color(0xFFC9E9D4)),
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         children: [
@@ -145,18 +145,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   'Total Spending',
                   style: TextStyle(
                     color: Colors.black87,
-                    fontSize: 7 * uiScale,
-                    height: 1.1,
+                    fontSize: 14 * uiScale,
+                    height: 1.2,
                   ),
                 ),
-                SizedBox(height: 2 * uiScale),
+                SizedBox(height: 5 * uiScale),
                 Text(
                   _formatPesos(totalCentavos),
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: 12 * uiScale,
+                    fontSize: 28 * uiScale,
                     fontWeight: FontWeight.w800,
-                    height: 1.1,
+                    height: 1.15,
                   ),
                 ),
               ],
@@ -164,8 +164,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Image.asset(
             'assets/images/trolly-transparent.png',
-            width: 94 * uiScale,
-            height: 54 * uiScale,
+            width: 155 * uiScale,
+            height: 105 * uiScale,
             fit: BoxFit.contain,
             semanticLabel: 'Trolly grocery cart',
           ),
@@ -182,26 +182,26 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Image.asset(
               'assets/images/grocery.jpg',
-              width: 125 * uiScale,
-              height: 105 * uiScale,
+              width: 200 * uiScale,
+              height: 165 * uiScale,
               fit: BoxFit.contain,
               semanticLabel: 'No shopping history illustration',
             ),
-            SizedBox(height: 3 * uiScale),
+            SizedBox(height: 10 * uiScale),
             Text(
               'You have no\nShopping History',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.black,
-                fontSize: 11 * uiScale,
+                fontSize: 20 * uiScale,
                 fontWeight: FontWeight.w800,
-                height: 1.15,
+                height: 1.2,
               ),
             ),
-            SizedBox(height: 11 * uiScale),
+            SizedBox(height: 20 * uiScale),
             SizedBox(
-              width: 96 * uiScale,
-              height: 27 * uiScale,
+              width: 180 * uiScale,
+              height: 50 * uiScale,
               child: ElevatedButton(
                 onPressed: () => Navigator.of(context).pushNamed('/shop'),
                 style: ElevatedButton.styleFrom(
@@ -210,13 +210,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   elevation: 0,
                   padding: EdgeInsets.zero,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(26),
                   ),
                 ),
                 child: Text(
                   'Start Shopping!',
                   style: TextStyle(
-                    fontSize: 8 * uiScale,
+                    fontSize: 15 * uiScale,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -232,20 +232,20 @@ class _HomeScreenState extends State<HomeScreen> {
     return ListView.separated(
       padding: EdgeInsets.zero,
       itemCount: _entries.length,
-      separatorBuilder: (_, _) => SizedBox(height: 7 * uiScale),
+      separatorBuilder: (_, _) => SizedBox(height: 12 * uiScale),
       itemBuilder: (context, index) {
         final entry = _entries[index];
         return Container(
           padding: EdgeInsets.fromLTRB(
-            8 * uiScale,
-            6 * uiScale,
-            8 * uiScale,
-            6 * uiScale,
+            16 * uiScale,
+            14 * uiScale,
+            16 * uiScale,
+            14 * uiScale,
           ),
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(color: const Color(0xFFD8D8D8)),
-            borderRadius: BorderRadius.circular(7),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
             children: [
@@ -257,18 +257,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       _formatDate(entry.completedAt),
                       style: TextStyle(
                         color: Colors.black54,
-                        fontSize: 7 * uiScale,
-                        height: 1.1,
+                        fontSize: 12 * uiScale,
+                        height: 1.2,
                       ),
                     ),
-                    SizedBox(height: 2 * uiScale),
+                    SizedBox(height: 5 * uiScale),
                     Text(
                       entry.title,
                       style: TextStyle(
                         color: Colors.black,
-                        fontSize: 8 * uiScale,
+                        fontSize: 15 * uiScale,
                         fontWeight: FontWeight.w700,
-                        height: 1.1,
+                        height: 1.2,
                       ),
                     ),
                   ],
@@ -278,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _formatPesos(entry.totalCentavos),
                 style: TextStyle(
                   color: _trollyOrange,
-                  fontSize: 9 * uiScale,
+                  fontSize: 16 * uiScale,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -291,12 +291,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBottomNavigation(double uiScale) {
     return Container(
-      height: 40 * uiScale,
-      padding: EdgeInsets.symmetric(horizontal: 4 * uiScale),
+      height: 68 * uiScale,
+      padding: EdgeInsets.symmetric(horizontal: 8 * uiScale),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: const Color(0xFFD8D8D8)),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(34),
       ),
       child: Row(
         children: [
@@ -333,13 +333,13 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 19 * uiScale, color: color),
-          SizedBox(height: 1 * uiScale),
+          Icon(icon, size: 27 * uiScale, color: color),
+          SizedBox(height: 2 * uiScale),
           Text(
             label,
             style: TextStyle(
               color: color,
-              fontSize: 7 * uiScale,
+              fontSize: 12 * uiScale,
               fontWeight: active ? FontWeight.w700 : FontWeight.w500,
               height: 1,
             ),
