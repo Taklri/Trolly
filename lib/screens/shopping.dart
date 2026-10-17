@@ -59,11 +59,19 @@ class ShoppingPage extends State<ShoppingScreen> {
   }
 
   void cancelShopping() {
+    if (ShoppingData.isGroceryListShopping) {
+      ShoppingData.clearShoppingSession();
+    }
     Navigator.pop(context);
   }
 
   void finishShopping() {
-    if (ShoppingData.currentProducts.isEmpty) {
+    if (ShoppingData.isGroceryListShopping &&
+        ShoppingData.checkedTotal() == 0) {
+      setState(() {
+        err = 'Check at least one product before finishing.';
+      });
+    } else if (ShoppingData.currentProducts.isEmpty) {
       setState(() {
         err = 'Add at least one product before finishing.';
       });
@@ -75,6 +83,7 @@ class ShoppingPage extends State<ShoppingScreen> {
   Widget productCard(int index) {
     Map<String, dynamic> product = ShoppingData.currentProducts[index];
     double total = (product['totalAmount'] as num).toDouble();
+    bool checked = product['checked'] == true;
 
     return Container(
       margin: EdgeInsets.only(bottom: 14),
@@ -88,6 +97,17 @@ class ShoppingPage extends State<ShoppingScreen> {
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         child: Row(
           children: [
+            if (ShoppingData.isGroceryListShopping)
+              Checkbox(
+                key: Key('grocery-product-checkbox-$index'),
+                value: checked,
+                onChanged: (value) {
+                  setState(() {
+                    product['checked'] = value == true;
+                    err = '';
+                  });
+                },
+              ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,9 +117,11 @@ class ShoppingPage extends State<ShoppingScreen> {
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
                   ),
                   Text(
-                    '- ₱${ShoppingData.money(total)}',
+                    '${ShoppingData.isGroceryListShopping && checked ? '+' : '-'} ₱${ShoppingData.money(total)}',
                     style: TextStyle(
-                      color: Color(0xFFFF3B30),
+                      color: ShoppingData.isGroceryListShopping && checked
+                          ? Color(0xFF16A34A)
+                          : Color(0xFFFF3B30),
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
@@ -134,104 +156,138 @@ class ShoppingPage extends State<ShoppingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double total = ShoppingData.totalSpending();
+    bool groceryMode = ShoppingData.isGroceryListShopping;
+    double total = groceryMode
+        ? ShoppingData.checkedTotal()
+        : ShoppingData.totalSpending();
     double budgetLeft = ShoppingData.budgetLeft();
 
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(24, 24, 24, 22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextButton.icon(
-                onPressed: () {
-                  cancelShopping();
-                },
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  foregroundColor: Colors.grey[600],
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop && ShoppingData.isGroceryListShopping) {
+          ShoppingData.clearShoppingSession();
+        }
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(24, 24, 24, 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    cancelShopping();
+                  },
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    foregroundColor: Colors.grey[600],
+                  ),
+                  icon: Icon(Icons.arrow_back, size: 20),
+                  label: Text(
+                    groceryMode ? 'Back to List' : 'Back to Method',
+                    style: TextStyle(fontSize: 14),
+                  ),
                 ),
-                icon: Icon(Icons.arrow_back, size: 20),
-                label: Text('Back to Method', style: TextStyle(fontSize: 14)),
-              ),
-              Text(
-                'Shop Well!',
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
-              ),
-              SizedBox(height: 6),
-              Text(
-                ShoppingData.hasBudget ? 'Current Budget' : 'Total Spending',
-                style: TextStyle(fontSize: 15, color: Colors.grey[700]),
-              ),
-              Divider(height: 8),
-              Text(
-                ShoppingData.hasBudget
-                    ? '₱${ShoppingData.money(budgetLeft)}'
-                    : '₱${ShoppingData.money(total)}',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w700,
-                  color: ShoppingData.hasBudget && budgetLeft <= 0
-                      ? Colors.red
-                      : Colors.black,
-                ),
-              ),
-              if (ShoppingData.hasBudget && budgetLeft <= 0)
                 Text(
-                  'Your budget has been emptied. Review your shopping before finishing.',
-                  style: TextStyle(color: Colors.red, fontSize: 13),
+                  groceryMode ? ShoppingData.groceryListName : 'Shop Well!',
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
                 ),
-              if (err.isNotEmpty)
-                Text(err, style: TextStyle(color: Colors.red, fontSize: 13)),
-              SizedBox(height: 16),
-              Expanded(
-                child: ShoppingData.currentProducts.isEmpty
-                    ? Center(
-                        child: Image.asset(
-                          'assets/images/No Products.png',
-                          width: 240,
+                if (groceryMode)
+                  Text(
+                    '${ShoppingData.currentProducts.length} ${ShoppingData.currentProducts.length == 1 ? 'item' : 'items'}',
+                    style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                  ),
+                SizedBox(height: 6),
+                Text(
+                  groceryMode
+                      ? 'Current Amount'
+                      : ShoppingData.hasBudget
+                      ? 'Current Budget'
+                      : 'Total Spending',
+                  style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+                ),
+                Divider(height: 8),
+                Text(
+                  groceryMode
+                      ? '₱${ShoppingData.money(total)}'
+                      : ShoppingData.hasBudget
+                      ? '₱${ShoppingData.money(budgetLeft)}'
+                      : '₱${ShoppingData.money(total)}',
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w700,
+                    color:
+                        !groceryMode &&
+                            ShoppingData.hasBudget &&
+                            budgetLeft <= 0
+                        ? Colors.red
+                        : Colors.black,
+                  ),
+                ),
+                if (!groceryMode && ShoppingData.hasBudget && budgetLeft <= 0)
+                  Text(
+                    'Your budget has been emptied. Review your shopping before finishing.',
+                    style: TextStyle(color: Colors.red, fontSize: 13),
+                  ),
+                if (err.isNotEmpty)
+                  Text(err, style: TextStyle(color: Colors.red, fontSize: 13)),
+                SizedBox(height: 16),
+                Expanded(
+                  child: ShoppingData.currentProducts.isEmpty
+                      ? Center(
+                          child: Image.asset(
+                            'assets/images/No Products.png',
+                            width: 240,
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: ShoppingData.currentProducts.length,
+                          itemBuilder: (context, index) {
+                            return productCard(index);
+                          },
                         ),
-                      )
-                    : ListView.builder(
-                        itemCount: ShoppingData.currentProducts.length,
-                        itemBuilder: (context, index) {
-                          return productCard(index);
-                        },
-                      ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(top: 10, bottom: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        cancelShopping();
-                      },
-                      iconSize: 29,
-                      icon: Icon(Icons.arrow_back, color: Color(0xFFFFA000)),
-                    ),
-                    FloatingActionButton(
-                      backgroundColor: Color(0xFFFFA000),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/add-product');
-                      },
-                      child: Icon(Icons.add, size: 30),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        finishShopping();
-                      },
-                      iconSize: 29,
-                      icon: Icon(Icons.flag_outlined, color: Color(0xFFFFA000)),
-                    ),
-                  ],
                 ),
-              ),
-            ],
+                Padding(
+                  padding: EdgeInsets.only(top: 10, bottom: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          cancelShopping();
+                        },
+                        iconSize: 29,
+                        icon: Icon(Icons.arrow_back, color: Color(0xFFFFA000)),
+                      ),
+                      if (!groceryMode)
+                        FloatingActionButton(
+                          backgroundColor: Color(0xFFFFA000),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          onPressed: () {
+                            Navigator.pushReplacementNamed(
+                              context,
+                              '/add-product',
+                            );
+                          },
+                          child: Icon(Icons.add, size: 30),
+                        ),
+                      IconButton(
+                        onPressed: () {
+                          finishShopping();
+                        },
+                        iconSize: 29,
+                        icon: Icon(
+                          Icons.flag_outlined,
+                          color: Color(0xFFFFA000),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -9,6 +9,9 @@ import 'screens/shopping_summary.dart';
 import 'screens/shop.dart';
 import 'screens/choose_method.dart';
 import 'screens/list_creation.dart';
+import 'screens/list_product.dart';
+import 'screens/history_summary.dart';
+import 'screens/grocery_list_selection.dart';
 
 void main() {
   runApp(const TrollyApp());
@@ -43,6 +46,9 @@ class TrollyApp extends StatelessWidget {
         '/shop': (context) => const ShopScreen(),
         '/choose-method': (context) => const ChooseMethodScreen(),
         '/create-list': (context) => const ListCreationScreen(),
+        '/list-product': (context) => const ListProductScreen(),
+        '/history-summary': (context) => const HistorySummaryScreen(),
+        '/grocery-lists': (context) => const GroceryListSelectionScreen(),
       },
       home: GetStartedScreen(),
     );

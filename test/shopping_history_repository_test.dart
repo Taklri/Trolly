@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,6 +24,17 @@ void main() {
       completedAt: DateTime(2026, 10, 15, 9, 30),
       title: 'On the go shopping',
       totalCentavos: 400000,
+      products: [
+        {
+          'productName': 'Rice',
+          'productPriceCentavos': 5000,
+          'quantity': 2,
+          'totalCentavos': 10000,
+        },
+      ],
+      hasBudget: true,
+      startingBudgetCentavos: 500000,
+      budgetLeftCentavos: 100000,
     );
 
     await repository.addEntry(entry);
@@ -32,6 +45,32 @@ void main() {
     expect(loadedEntries.single.completedAt, entry.completedAt);
     expect(loadedEntries.single.title, entry.title);
     expect(loadedEntries.single.totalCentavos, entry.totalCentavos);
+    expect(loadedEntries.single.products, entry.products);
+    expect(loadedEntries.single.hasBudget, isTrue);
+    expect(loadedEntries.single.startingBudgetCentavos, 500000);
+    expect(loadedEntries.single.budgetLeftCentavos, 100000);
+  });
+
+  test('loads older history without product and budget details', () async {
+    SharedPreferences.setMockInitialValues({
+      'shopping_history': jsonEncode([
+        {
+          'id': 'older-session',
+          'completedAt': '2026-10-14T10:00:00.000',
+          'title': 'On the go shopping',
+          'totalCentavos': 25000,
+        },
+      ]),
+    });
+
+    const repository = ShoppingHistoryRepository();
+    final loadedEntries = await repository.loadEntries();
+
+    expect(loadedEntries, hasLength(1));
+    expect(loadedEntries.single.id, 'older-session');
+    expect(loadedEntries.single.hasFullDetails, isFalse);
+    expect(loadedEntries.single.products, isNull);
+    expect(loadedEntries.single.hasBudget, isNull);
   });
 
   test('clearEntries removes persisted history', () async {

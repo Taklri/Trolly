@@ -97,23 +97,28 @@ class ChooseMethodScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 20),
                                 Semantics(
-                                  label: 'Use Grocery List, unavailable',
+                                  label: 'Use Grocery List',
                                   button: true,
-                                  enabled: false,
                                   child: ExcludeSemantics(
                                     child: methodCard(
                                       key: const Key('choose-grocery-list'),
                                       title: 'Use Grocery List',
                                       description:
-                                          'Create and manage your grocery lists.',
+                                          'Use one of your saved grocery lists.',
                                       steps: const [
                                         'Use your created List',
-                                        'Set Budget',
-                                        'Get exact amount before paying over the counter',
+                                        'Track purchased items',
+                                        'Get the exact amount before paying over the counter',
                                       ],
                                       backgroundColor: _trollyCream,
                                       borderColor: _trollyOrange,
                                       stepColor: _trollyOrange,
+                                      onPressed: () {
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/grocery-lists',
+                                        );
+                                      },
                                     ),
                                   ),
                                 ),

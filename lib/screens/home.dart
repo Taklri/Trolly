@@ -235,54 +235,73 @@ class _HomeScreenState extends State<HomeScreen> {
       separatorBuilder: (_, _) => SizedBox(height: 12 * uiScale),
       itemBuilder: (context, index) {
         final entry = _entries[index];
-        return Container(
-          padding: EdgeInsets.fromLTRB(
-            16 * uiScale,
-            14 * uiScale,
-            16 * uiScale,
-            14 * uiScale,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFD8D8D8)),
+        return Material(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            side: const BorderSide(color: Color(0xFFD8D8D8)),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _formatDate(entry.completedAt),
-                      style: TextStyle(
-                        color: Colors.black54,
-                        fontSize: 12 * uiScale,
-                        height: 1.2,
-                      ),
-                    ),
-                    SizedBox(height: 5 * uiScale),
-                    Text(
-                      entry.title,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 15 * uiScale,
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
+          child: InkWell(
+            key: Key('history-entry-${entry.id}'),
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                '/history-summary',
+                arguments: entry,
+              );
+            },
+            borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                16 * uiScale,
+                14 * uiScale,
+                12 * uiScale,
+                14 * uiScale,
               ),
-              Text(
-                _formatPesos(entry.totalCentavos),
-                style: TextStyle(
-                  color: _trollyOrange,
-                  fontSize: 16 * uiScale,
-                  fontWeight: FontWeight.w800,
-                ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _formatDate(entry.completedAt),
+                          style: TextStyle(
+                            color: Colors.black54,
+                            fontSize: 12 * uiScale,
+                            height: 1.2,
+                          ),
+                        ),
+                        SizedBox(height: 5 * uiScale),
+                        Text(
+                          entry.title,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 15 * uiScale,
+                            fontWeight: FontWeight.w700,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    _formatPesos(entry.totalCentavos),
+                    style: TextStyle(
+                      color: _trollyOrange,
+                      fontSize: 16 * uiScale,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  SizedBox(width: 6 * uiScale),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.black45,
+                    size: 24 * uiScale,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },

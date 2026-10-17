@@ -186,12 +186,16 @@ class EditProductPage extends State<EditProductScreen> {
   void saveProduct() {
     double price = double.parse(priceController.text.trim());
     int quantity = int.parse(quantityController.text.trim());
+    Map<String, dynamic> oldProduct =
+        ShoppingData.currentProducts[productIndex];
 
     ShoppingData.currentProducts[productIndex] = {
       'productName': productNameController.text.trim(),
       'productPrice': price,
       'quantity': quantity,
       'totalAmount': price * quantity,
+      if (ShoppingData.isGroceryListShopping)
+        'checked': oldProduct['checked'] == true,
     };
 
     Navigator.pushReplacementNamed(context, '/shopping');

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../globs/grocery_lists.dart';
+
 const _trollyGreen = Color(0xFF16A34A);
 const _trollyMint = Color(0xFFE3F5EA);
 const _trollyMintBorder = Color(0xFFC9E9D4);
@@ -7,8 +9,23 @@ const _trollyText = Color(0xFF171717);
 const _trollySecondaryText = Color(0xFF616161);
 const _trollyBorder = Color(0xFFD8D8D8);
 
-class ShopScreen extends StatelessWidget {
+class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
+
+  @override
+  State<ShopScreen> createState() => ShopPage();
+}
+
+class ShopPage extends State<ShopScreen> {
+  void openListEditor({int? listId}) {
+    Navigator.pushNamed(
+      context,
+      '/create-list',
+      arguments: listId == null ? null : {'listId': listId},
+    ).then((result) {
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +60,11 @@ class ShopScreen extends StatelessWidget {
               SizedBox(height: 28 * uiScale),
               _buildListHeading(context, uiScale),
               SizedBox(height: 12 * uiScale),
-              Expanded(child: _buildEmptyState(uiScale)),
+              Expanded(
+                child: GroceryListData.lists.isEmpty
+                    ? _buildEmptyState(uiScale)
+                    : _buildGroceryLists(uiScale),
+              ),
               SizedBox(height: 16 * uiScale),
               _buildBottomNavigation(context, uiScale),
             ],
@@ -133,7 +154,7 @@ class ShopScreen extends StatelessWidget {
               ),
               SizedBox(height: 3 * uiScale),
               Text(
-                '0 Grocery Lists',
+                '${GroceryListData.lists.length} ${GroceryListData.lists.length == 1 ? 'Grocery List' : 'Grocery Lists'}',
                 style: TextStyle(
                   color: _trollySecondaryText,
                   fontSize: 13 * uiScale,
@@ -148,9 +169,7 @@ class ShopScreen extends StatelessWidget {
           height: 48 * uiScale,
           child: TextButton.icon(
             key: const Key('create-list-button'),
-            onPressed: () {
-              Navigator.pushNamed(context, '/create-list');
-            },
+            onPressed: openListEditor,
             style: TextButton.styleFrom(
               backgroundColor: _trollyMint,
               foregroundColor: _trollyGreen,
@@ -186,6 +205,83 @@ class ShopScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildGroceryLists(double uiScale) {
+    return ListView.separated(
+      padding: EdgeInsets.symmetric(vertical: 4 * uiScale),
+      itemCount: GroceryListData.lists.length,
+      separatorBuilder: (_, _) => SizedBox(height: 12 * uiScale),
+      itemBuilder: (context, index) {
+        Map<String, dynamic> groceryList = GroceryListData.lists[index];
+        List<dynamic> products = groceryList['products'];
+        double total = 0;
+
+        for (int i = 0; i < products.length; i++) {
+          total += (products[i]['totalAmount'] as num).toDouble();
+        }
+
+        return Material(
+          color: Colors.white,
+          child: InkWell(
+            key: Key('grocery-list-row-$index'),
+            onTap: () {
+              openListEditor(listId: groceryList['id']);
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: EdgeInsets.all(16 * uiScale),
+              decoration: BoxDecoration(
+                border: Border.all(color: _trollyBorder),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          groceryList['name'].toString(),
+                          style: TextStyle(
+                            color: _trollyText,
+                            fontSize: 16 * uiScale,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 4 * uiScale),
+                        Text(
+                          '${products.length} ${products.length == 1 ? 'product' : 'products'}',
+                          style: TextStyle(
+                            color: _trollySecondaryText,
+                            fontSize: 13 * uiScale,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '₱${_money(total)}',
+                    style: TextStyle(
+                      color: _trollyGreen,
+                      fontSize: 15 * uiScale,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  SizedBox(width: 6 * uiScale),
+                  const Icon(Icons.chevron_right, color: _trollySecondaryText),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _money(double amount) {
+    if (amount == amount.roundToDouble()) return amount.toStringAsFixed(0);
+    return amount.toStringAsFixed(2);
   }
 
   Widget _buildBottomNavigation(BuildContext context, double uiScale) {

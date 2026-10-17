@@ -1,17 +1,64 @@
 import 'package:flutter/material.dart';
 import '../globs/shopping.dart';
+import '../models/shopping_history_entry.dart';
+import '../services/shopping_history_repository.dart';
 
 class ShoppingSummaryScreen extends StatelessWidget {
-  const ShoppingSummaryScreen({super.key});
+  const ShoppingSummaryScreen({
+    super.key,
+    this.repository = const ShoppingHistoryRepository(),
+  });
+
+  final ShoppingHistoryRepository repository;
 
   void cancelSummary(BuildContext context) {
     Navigator.pop(context);
   }
 
   void finishShopping(BuildContext context) {
+    double total = ShoppingData.amountForSummary();
+    DateTime completedAt = DateTime.now();
+    List<Map<String, dynamic>> products = ShoppingData.productsForSummary();
+    List<Map<String, dynamic>> savedProducts = [];
+
+    for (int i = 0; i < products.length; i++) {
+      Map<String, dynamic> product = products[i];
+      savedProducts.add({
+        'productName': product['productName'],
+        'productPriceCentavos':
+            ((product['productPrice'] as num).toDouble() * 100).round(),
+        'quantity': product['quantity'],
+        'totalCentavos': ((product['totalAmount'] as num).toDouble() * 100)
+            .round(),
+      });
+    }
+
     ShoppingData.saveHistory();
-    ShoppingData.currentProducts = [];
-    Navigator.pushReplacementNamed(context, '/home');
+    repository
+        .addEntry(
+          ShoppingHistoryEntry(
+            id: completedAt.microsecondsSinceEpoch.toString(),
+            completedAt: completedAt,
+            title: ShoppingData.isGroceryListShopping
+                ? ShoppingData.groceryListName
+                : 'On the go shopping',
+            totalCentavos: (total * 100).round(),
+            products: savedProducts,
+            hasBudget: ShoppingData.hasBudget,
+            startingBudgetCentavos: ShoppingData.hasBudget
+                ? (ShoppingData.startingBudget * 100).round()
+                : null,
+            budgetLeftCentavos: ShoppingData.hasBudget
+                ? (ShoppingData.budgetLeft() * 100).round()
+                : null,
+          ),
+        )
+        .then((_) {
+          if (context.mounted == false) return;
+
+          ShoppingData.clearShoppingSession();
+          Navigator.pushReplacementNamed(context, '/home');
+        });
   }
 
   Widget productRow(Map<String, dynamic> product) {
@@ -56,7 +103,8 @@ class ShoppingSummaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double total = ShoppingData.totalSpending();
+    double total = ShoppingData.amountForSummary();
+    List<Map<String, dynamic>> products = ShoppingData.productsForSummary();
 
     return Scaffold(
       body: SafeArea(
@@ -74,7 +122,12 @@ class ShoppingSummaryScreen extends StatelessWidget {
                   foregroundColor: Colors.grey[600],
                 ),
                 icon: Icon(Icons.arrow_back, size: 20),
-                label: Text('Back to List', style: TextStyle(fontSize: 14)),
+                label: Text(
+                  ShoppingData.isGroceryListShopping
+                      ? 'Back to List'
+                      : 'Back to Shopping',
+                  style: TextStyle(fontSize: 14),
+                ),
               ),
               Text(
                 'Here’s your',
@@ -92,9 +145,9 @@ class ShoppingSummaryScreen extends StatelessWidget {
               SizedBox(height: 32),
               Expanded(
                 child: ListView.builder(
-                  itemCount: ShoppingData.currentProducts.length,
+                  itemCount: products.length,
                   itemBuilder: (context, index) {
-                    return productRow(ShoppingData.currentProducts[index]);
+                    return productRow(products[index]);
                   },
                 ),
               ),
