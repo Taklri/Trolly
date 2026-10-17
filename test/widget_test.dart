@@ -7,9 +7,11 @@ import 'package:trolly/globs/shopping.dart';
 import 'package:trolly/main.dart';
 import 'package:trolly/models/shopping_history_entry.dart';
 import 'package:trolly/screens/add_product.dart';
+import 'package:trolly/screens/choose_method.dart';
 import 'package:trolly/screens/edit_product.dart';
 import 'package:trolly/screens/getstarted.dart';
 import 'package:trolly/screens/home.dart';
+import 'package:trolly/screens/list_creation.dart';
 import 'package:trolly/screens/shop.dart';
 import 'package:trolly/screens/shopping.dart';
 import 'package:trolly/screens/shopping_method.dart';
@@ -496,7 +498,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        routes: {'/shop': (_) => const ShopPlaceholderScreen()},
+        routes: {'/shop': (_) => const ShopScreen()},
         home: const HomeScreen(),
       ),
     );
@@ -510,10 +512,10 @@ void main() {
     expect(find.text('October'), findsNothing);
   });
 
-  testWidgets('Start Shopping opens the Shop placeholder', (tester) async {
+  testWidgets('Home Start Shopping opens the Shop page', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        routes: {'/shop': (_) => const ShopPlaceholderScreen()},
+        routes: {'/shop': (_) => const ShopScreen()},
         home: const HomeScreen(),
       ),
     );
@@ -524,8 +526,160 @@ void main() {
     await tester.tap(find.text('Start Shopping!'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(ShopPlaceholderScreen), findsOneWidget);
-    expect(find.text('Shopping flow coming soon.'), findsOneWidget);
+    expect(find.byType(ShopScreen), findsOneWidget);
+    expect(find.text('Ready to shop?'), findsOneWidget);
+  });
+
+  testWidgets('Home bottom Shop button opens the Shop page', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/shop': (_) => const ShopScreen()},
+        home: const HomeScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('home-navigation-shop')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ShopScreen), findsOneWidget);
+    expect(find.text('Ready to shop?'), findsOneWidget);
+  });
+
+  testWidgets('Shop shows its empty grocery list state', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/home': (_) => const Scaffold(body: Text('Home destination')),
+          '/choose-method': (_) => const ChooseMethodScreen(),
+          '/create-list': (_) => const ListCreationScreen(),
+        },
+        home: const ShopScreen(),
+      ),
+    );
+
+    expect(find.text('Ready to shop?'), findsOneWidget);
+    expect(find.text('Track your spending as you go'), findsOneWidget);
+    expect(find.text('Your Lists'), findsOneWidget);
+    expect(find.text('0 Grocery Lists'), findsOneWidget);
+    expect(find.bySemanticsLabel('No grocery list'), findsOneWidget);
+    expect(find.text('Start Shopping'), findsOneWidget);
+    expect(find.text('Create List'), findsOneWidget);
+  });
+
+  testWidgets('Shop actions open placeholders and return to Shop', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/choose-method': (_) => const ChooseMethodScreen(),
+          '/create-list': (_) => const ListCreationScreen(),
+        },
+        home: const ShopScreen(),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('start-shopping-button')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ChooseMethodScreen), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('choose-cancel')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ShopScreen), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('create-list-button')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ListCreationScreen), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('list-creation-back-button')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ShopScreen), findsOneWidget);
+  });
+
+  testWidgets('Choose Method shows three controls without a back button', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: ChooseMethodScreen()));
+
+    expect(find.text('Choose'), findsOneWidget);
+    expect(find.text('Method'), findsOneWidget);
+    expect(find.text('On The Go Shopping'), findsOneWidget);
+    expect(find.text('Use Grocery List'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.byType(OutlinedButton), findsNWidgets(2));
+    expect(find.byType(ElevatedButton), findsOneWidget);
+    expect(find.byType(IconButton), findsNothing);
+  });
+
+  testWidgets('On The Go opens budget setup and back returns to method', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/on-the-go': (_) => ShoppingMethodScreen()},
+        home: const ChooseMethodScreen(),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('choose-on-the-go')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ShoppingMethodScreen), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+    expect(find.byType(ChooseMethodScreen), findsOneWidget);
+  });
+
+  testWidgets('Use Grocery List is visible and unavailable', (tester) async {
+    ShoppingData.hasBudget = true;
+    ShoppingData.startingBudget = 500;
+
+    await tester.pumpWidget(const MaterialApp(home: ChooseMethodScreen()));
+
+    OutlinedButton groceryListButton = tester.widget(
+      find.byKey(const Key('choose-grocery-list')),
+    );
+    expect(groceryListButton.onPressed, isNull);
+
+    expect(find.byType(ChooseMethodScreen), findsOneWidget);
+    expect(ShoppingData.hasBudget, isTrue);
+    expect(ShoppingData.startingBudget, 500);
+  });
+
+  testWidgets('Choose Method fits narrow and wide layouts', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 568);
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await tester.pumpWidget(const MaterialApp(home: ChooseMethodScreen()));
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('choose-cancel')), findsOneWidget);
+
+    tester.view.physicalSize = const Size(900, 800);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('choose-on-the-go')), findsOneWidget);
+  });
+
+  testWidgets('Shop bottom Home button opens Home route', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/home': (_) => const Scaffold(body: Text('Home destination')),
+        },
+        home: const ShopScreen(),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('shop-navigation-home')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Home destination'), findsOneWidget);
+    expect(find.byType(ShopScreen), findsNothing);
   });
 
   testWidgets('Home renders populated history and summed spending', (

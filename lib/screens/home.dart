@@ -112,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     : _buildHistoryList(uiScale),
               ),
               SizedBox(height: 16 * uiScale),
-              _buildBottomNavigation(uiScale),
+              _buildBottomNavigation(context, uiScale),
             ],
           ),
         ),
@@ -289,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBottomNavigation(double uiScale) {
+  Widget _buildBottomNavigation(BuildContext context, double uiScale) {
     return Container(
       height: 68 * uiScale,
       padding: EdgeInsets.symmetric(horizontal: 8 * uiScale),
@@ -310,6 +310,9 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icons.shopping_cart_outlined,
             label: 'Shop',
             uiScale: uiScale,
+            onTap: () {
+              Navigator.pushNamed(context, '/shop');
+            },
           ),
           _buildNavigationItem(
             icon: Icons.settings_outlined,
@@ -326,25 +329,31 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     bool active = false,
     required double uiScale,
+    VoidCallback? onTap,
   }) {
     final color = active ? _trollyGreen : Colors.black45;
 
     return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 27 * uiScale, color: color),
-          SizedBox(height: 2 * uiScale),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 12 * uiScale,
-              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-              height: 1,
+      child: InkWell(
+        key: Key('home-navigation-${label.toLowerCase()}'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 27 * uiScale, color: color),
+            SizedBox(height: 2 * uiScale),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 12 * uiScale,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                height: 1,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
