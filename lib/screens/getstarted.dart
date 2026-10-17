@@ -26,10 +26,10 @@ class GetStartedPage extends State<GetStartedScreen> {
   }
 
   String lettersOnly(String value) {
-    const letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ';
-    var newValue = '';
+    String letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ';
+    String newValue = '';
 
-    for (var i = 0; i < value.length; i++) {
+    for (int i = 0; i < value.length; i++) {
       if (letters.contains(value[i]) && newValue.length < 10) {
         newValue += value[i];
       }
@@ -39,7 +39,7 @@ class GetStartedPage extends State<GetStartedScreen> {
   }
 
   void nameChanged(String value) {
-    final newValue = lettersOnly(value);
+    String newValue = lettersOnly(value);
 
     if (nameController.text != newValue) {
       nameController.value = TextEditingValue(
@@ -48,11 +48,7 @@ class GetStartedPage extends State<GetStartedScreen> {
       );
     }
 
-    if (err.isNotEmpty) {
-      setState(() {
-        err = '';
-      });
-    }
+    if (err.isNotEmpty) setState(() => err = '');
   }
 
   Future<void> getStarted() async {
@@ -63,9 +59,7 @@ class GetStartedPage extends State<GetStartedScreen> {
         err = 'Please enter your name.';
       });
       return;
-    }
-
-    if (name.length < 2) {
+    } else if (name.length < 2) {
       setState(() {
         err = 'Name must have at least 2 letters.';
       });
@@ -86,44 +80,54 @@ class GetStartedPage extends State<GetStartedScreen> {
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 28),
+            padding: const EdgeInsets.fromLTRB(28, 24, 28, 22),
             child: SizedBox(
-              width: 300,
+              width: 350,
               child: Column(
                 children: [
                   Spacer(flex: 3),
                   Flexible(
                     flex: 4,
-                    child: Image.asset('assets/images/trolly.jpg', width: 300),
+                    child: Image.asset('assets/images/trolly.jpg', width: 350),
                   ),
-                  SizedBox(height: 16),
-                  Text('Welcome to', style: TextStyle(fontSize: 12)),
+                  const SizedBox(height: 16),
+                  const Text('Welcome to', style: TextStyle(fontSize: 22)),
                   Text(
                     'TROLLY',
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: 50,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF16A34A),
                     ),
                   ),
-                  SizedBox(height: 40),
-                  Text('Tell us your name:', style: TextStyle(fontSize: 12)),
-                  SizedBox(height: 6),
+                  const SizedBox(height: 40),
+                  const Text(
+                    'Tell us your name:',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
                   SizedBox(
-                    height: 44,
+                    height: 70,
                     child: TextField(
                       controller: nameController,
+                      textAlign: TextAlign.center,
                       maxLength: 10,
                       onChanged: nameChanged,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 21,
+                      ),
                       decoration: InputDecoration(
                         counterText: '',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.black26),
+                          borderSide: const BorderSide(color: Colors.black26),
                         ),
                       ),
                     ),
@@ -131,19 +135,19 @@ class GetStartedPage extends State<GetStartedScreen> {
                   if (err.isNotEmpty)
                     Text(
                       err,
-                      style: TextStyle(color: Colors.red, fontSize: 12),
+                      style: const TextStyle(color: Colors.red, fontSize: 13),
                     ),
-                  Spacer(flex: 2),
+                  const Spacer(flex: 2),
                   SizedBox(
-                    width: 300,
-                    height: 44,
+                    width: double.infinity,
+                    height: 56,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF16A34A),
+                        backgroundColor: const Color(0xFF16A34A),
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(28),
                         ),
                       ),
                       onPressed: () {
@@ -151,11 +155,14 @@ class GetStartedPage extends State<GetStartedScreen> {
                       },
                       child: Text(
                         "Let's Get Started",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
-                  SizedBox(height: 28),
+                  const SizedBox(height: 6),
                 ],
               ),
             ),

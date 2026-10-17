@@ -58,6 +58,7 @@ class TrollyBottomNavigation extends StatelessWidget {
 
     return Expanded(
       child: InkWell(
+        key: Key('${activeItem.name}-navigation-${label.toLowerCase()}'),
         onTap: () => onItemTap(item),
         borderRadius: BorderRadius.circular(18),
         child: Column(

@@ -3,15 +3,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:trolly/globs/activeuser.dart';
+import 'package:trolly/globs/grocery_lists.dart';
 import 'package:trolly/globs/shopping.dart';
 import 'package:trolly/main.dart';
 import 'package:trolly/models/app_preferences.dart';
 import 'package:trolly/models/shopping_history_entry.dart';
 import 'package:trolly/screens/add_product.dart';
+import 'package:trolly/screens/choose_method.dart';
 import 'package:trolly/screens/edit_product.dart';
 import 'package:trolly/screens/getstarted.dart';
+import 'package:trolly/screens/grocery_list_selection.dart';
 import 'package:trolly/screens/home.dart';
 import 'package:trolly/screens/settings.dart';
+import 'package:trolly/screens/list_creation.dart';
+import 'package:trolly/screens/list_product.dart';
 import 'package:trolly/screens/shop.dart';
 import 'package:trolly/screens/shopping.dart';
 import 'package:trolly/screens/shopping_method.dart';
@@ -22,10 +27,9 @@ import 'package:trolly/services/user_preferences.dart';
 void main() {
   setUp(() {
     ActiveUser.activeUser = {};
-    ShoppingData.hasBudget = false;
-    ShoppingData.startingBudget = 0;
-    ShoppingData.currentProducts = [];
+    ShoppingData.clearShoppingSession();
     ShoppingData.shoppingHistory = [];
+    GroceryListData.reset();
     SharedPreferences.setMockInitialValues({});
   });
 
@@ -82,7 +86,7 @@ void main() {
       MaterialApp(
         routes: {
           '/settings': (_) => const SettingsScreen(),
-          '/shop': (_) => const ShopPlaceholderScreen(),
+          '/shop': (_) => const ShopScreen(),
         },
         home: const HomeScreen(),
       ),
@@ -545,8 +549,20 @@ void main() {
     expect(find.text('Eggs'), findsNothing);
 
     await tester.tap(find.byIcon(Icons.delete));
-    await tester.pump();
-    expect(find.text('No Product yet'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('Delete Product?'), findsOneWidget);
+    expect(find.text('Are you sure you want to delete Bread?'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Bread'), findsOneWidget);
+    expect(ShoppingData.currentProducts.length, 1);
+
+    await tester.tap(find.byIcon(Icons.delete));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Image), findsOneWidget);
     expect(ShoppingData.currentProducts, isEmpty);
   });
 
@@ -581,6 +597,18 @@ void main() {
     expect(ShoppingData.shoppingHistory.length, 1);
     expect(ShoppingData.shoppingHistory[0]['totalAmount'], 100);
     expect(ShoppingData.currentProducts, isEmpty);
+    expect(find.text('On the go shopping'), findsOneWidget);
+
+    final savedEntries = await const ShoppingHistoryRepository().loadEntries();
+    expect(savedEntries.length, 1);
+    expect(savedEntries[0].totalCentavos, 10000);
+    expect(savedEntries[0].products, hasLength(1));
+    expect(savedEntries[0].products![0]['productName'], 'Juice');
+    expect(savedEntries[0].products![0]['productPriceCentavos'], 5000);
+    expect(savedEntries[0].products![0]['quantity'], 2);
+    expect(savedEntries[0].hasBudget, isTrue);
+    expect(savedEntries[0].startingBudgetCentavos, 50000);
+    expect(savedEntries[0].budgetLeftCentavos, 40000);
   });
 
   testWidgets('summary back button returns to the shopping list', (
@@ -615,7 +643,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        routes: {'/shop': (_) => const ShopPlaceholderScreen()},
+        routes: {'/shop': (_) => const ShopScreen()},
         home: const HomeScreen(),
       ),
     );
@@ -653,20 +681,707 @@ void main() {
     expect(find.text(r'$100'), findsNWidgets(2));
   });
 
-  testWidgets('Start Shopping opens the Shop placeholder', (tester) async {
+  testWidgets('Home Start Shopping opens the Shop page', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        routes: {'/shop': (_) => const ShopPlaceholderScreen()},
+        routes: {'/shop': (_) => const ShopScreen()},
         home: const HomeScreen(),
       ),
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('Start Shopping!'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Start Shopping!'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(ShopPlaceholderScreen), findsOneWidget);
-    expect(find.text('Shopping flow coming soon.'), findsOneWidget);
+    expect(find.byType(ShopScreen), findsOneWidget);
+    expect(find.text('Ready to shop?'), findsOneWidget);
+  });
+
+  testWidgets('Home bottom Shop button opens the Shop page', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/shop': (_) => const ShopScreen()},
+        home: const HomeScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('home-navigation-shop')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ShopScreen), findsOneWidget);
+    expect(find.text('Ready to shop?'), findsOneWidget);
+  });
+
+  testWidgets('Shop shows its empty grocery list state', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/home': (_) => const Scaffold(body: Text('Home destination')),
+          '/choose-method': (_) => const ChooseMethodScreen(),
+          '/create-list': (_) => const ListCreationScreen(),
+        },
+        home: const ShopScreen(),
+      ),
+    );
+
+    expect(find.text('Ready to shop?'), findsOneWidget);
+    expect(find.text('Track your spending as you go'), findsOneWidget);
+    expect(find.text('Your Lists'), findsOneWidget);
+    expect(find.text('0 Grocery Lists'), findsOneWidget);
+    expect(find.bySemanticsLabel('No grocery list'), findsOneWidget);
+    expect(find.text('Start Shopping'), findsOneWidget);
+    expect(find.text('Create List'), findsOneWidget);
+  });
+
+  testWidgets('Shop actions open placeholders and return to Shop', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/choose-method': (_) => const ChooseMethodScreen(),
+          '/create-list': (_) => const ListCreationScreen(),
+        },
+        home: const ShopScreen(),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('start-shopping-button')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ChooseMethodScreen), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('choose-cancel')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ShopScreen), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('create-list-button')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ListCreationScreen), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('list-creation-back-button')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ShopScreen), findsOneWidget);
+  });
+
+  testWidgets('Choose Method shows three controls without a back button', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: ChooseMethodScreen()));
+
+    expect(find.text('Choose'), findsOneWidget);
+    expect(find.text('Method'), findsOneWidget);
+    expect(find.text('On The Go Shopping'), findsOneWidget);
+    expect(find.text('Use Grocery List'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.byType(OutlinedButton), findsNWidgets(2));
+    expect(find.byType(ElevatedButton), findsOneWidget);
+    expect(find.byType(IconButton), findsNothing);
+  });
+
+  testWidgets('On The Go opens budget setup and back returns to method', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/on-the-go': (_) => ShoppingMethodScreen()},
+        home: const ChooseMethodScreen(),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('choose-on-the-go')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ShoppingMethodScreen), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+    expect(find.byType(ChooseMethodScreen), findsOneWidget);
+  });
+
+  testWidgets('Use Grocery List opens saved-list selection', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/grocery-lists': (_) => const GroceryListSelectionScreen()},
+        home: const ChooseMethodScreen(),
+      ),
+    );
+
+    await tester.ensureVisible(find.byKey(const Key('choose-grocery-list')));
+    await tester.tap(find.byKey(const Key('choose-grocery-list')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(GroceryListSelectionScreen), findsOneWidget);
+    expect(find.text('Your Lists'), findsOneWidget);
+  });
+
+  testWidgets('selecting a grocery list starts copied checkbox shopping', (
+    tester,
+  ) async {
+    GroceryListData.lists.add({
+      'id': 1,
+      'name': 'Sunday Groceries',
+      'products': [
+        {
+          'productName': 'Rice',
+          'productPrice': 50.0,
+          'quantity': 2,
+          'totalAmount': 100.0,
+        },
+        {
+          'productName': 'Oil',
+          'productPrice': 80.0,
+          'quantity': 1,
+          'totalAmount': 80.0,
+        },
+      ],
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/shopping': (_) => const ShoppingScreen()},
+        home: const GroceryListSelectionScreen(),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('grocery-list-select-0')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ShoppingScreen), findsOneWidget);
+    expect(find.text('Sunday Groceries'), findsOneWidget);
+    expect(find.text('Current Amount'), findsOneWidget);
+    expect(find.byType(FloatingActionButton), findsNothing);
+    expect(find.byKey(const Key('grocery-product-checkbox-0')), findsOneWidget);
+    expect(ShoppingData.currentProducts.length, 2);
+    expect(ShoppingData.currentProducts[0]['checked'], isFalse);
+    expect(GroceryListData.lists[0]['products'][0]['checked'], isNull);
+
+    await tester.tap(find.byKey(const Key('grocery-product-checkbox-0')));
+    await tester.pump();
+    expect(find.text('₱100'), findsOneWidget);
+    expect(ShoppingData.checkedTotal(), 100);
+  });
+
+  testWidgets('grocery shopping requires one checked product to finish', (
+    tester,
+  ) async {
+    ShoppingData.startGroceryListShopping(
+      listName: 'Weekend Needs',
+      products: [
+        {
+          'productName': 'Bread',
+          'productPrice': 40.0,
+          'quantity': 1,
+          'totalAmount': 40.0,
+        },
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/shopping-summary': (_) => const ShoppingSummaryScreen()},
+        home: const ShoppingScreen(),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.flag_outlined));
+    await tester.pump();
+    expect(
+      find.text('Check at least one product before finishing.'),
+      findsOneWidget,
+    );
+    expect(find.byType(ShoppingSummaryScreen), findsNothing);
+
+    await tester.tap(find.byKey(const Key('grocery-product-checkbox-0')));
+    await tester.tap(find.byIcon(Icons.flag_outlined));
+    await tester.pumpAndSettle();
+    expect(find.byType(ShoppingSummaryScreen), findsOneWidget);
+    expect(find.text('₱40'), findsWidgets);
+  });
+
+  testWidgets('grocery summary saves only checked products under list name', (
+    tester,
+  ) async {
+    ShoppingData.startGroceryListShopping(
+      listName: 'Sunday Groceries',
+      products: [
+        {
+          'productName': 'Rice',
+          'productPrice': 50.0,
+          'quantity': 2,
+          'totalAmount': 100.0,
+        },
+        {
+          'productName': 'Oil',
+          'productPrice': 80.0,
+          'quantity': 1,
+          'totalAmount': 80.0,
+        },
+      ],
+    );
+    ShoppingData.currentProducts[0]['checked'] = true;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/home': (_) => const Scaffold(body: Text('Home destination')),
+        },
+        home: const ShoppingSummaryScreen(),
+      ),
+    );
+
+    expect(find.text('Rice'), findsOneWidget);
+    expect(find.text('Oil'), findsNothing);
+    await tester.tap(find.text('Finish Shopping'));
+    await tester.pumpAndSettle();
+
+    List<ShoppingHistoryEntry> entries = await const ShoppingHistoryRepository()
+        .loadEntries();
+    expect(entries.length, 1);
+    expect(entries[0].title, 'Sunday Groceries');
+    expect(entries[0].totalCentavos, 10000);
+    expect(entries[0].products, hasLength(1));
+    expect(ShoppingData.currentProducts, isEmpty);
+  });
+
+  testWidgets('Choose Method fits narrow and wide layouts', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 568);
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await tester.pumpWidget(const MaterialApp(home: ChooseMethodScreen()));
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('choose-cancel')), findsOneWidget);
+
+    tester.view.physicalSize = const Size(900, 800);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('choose-on-the-go')), findsOneWidget);
+  });
+
+  testWidgets('Shop bottom Home button opens Home route', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/home': (_) => const Scaffold(body: Text('Home destination')),
+        },
+        home: const ShopScreen(),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('shop-navigation-home')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Home destination'), findsOneWidget);
+    expect(find.byType(ShopScreen), findsNothing);
+  });
+
+  testWidgets('creates a grocery list and displays it on Shop', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/create-list': (_) => const ListCreationScreen(),
+          '/list-product': (_) => const ListProductScreen(),
+        },
+        home: const ShopScreen(),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('create-list-button')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('grocery-list-name')),
+      'Weekly Needs',
+    );
+    await tester.ensureVisible(find.byKey(const Key('add-list-product')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('add-list-product')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('list-product-save')));
+    await tester.pump();
+    expect(find.text('Product name is required.'), findsOneWidget);
+    expect(find.text('Product price is required.'), findsOneWidget);
+    expect(find.text('Quantity is required.'), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('list-product-name')), 'Rice');
+    await tester.enterText(find.byKey(const Key('list-product-price')), '50');
+    await tester.enterText(find.byKey(const Key('list-product-quantity')), '2');
+    await tester.pump();
+    expect(find.text('₱100'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('list-product-save')));
+    await tester.pumpAndSettle();
+    expect(find.text('1 product'), findsOneWidget);
+    expect(find.text('Estimated Total: ₱100'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('save-grocery-list')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ShopScreen), findsOneWidget);
+    expect(find.text('1 Grocery List'), findsOneWidget);
+    expect(find.text('Weekly Needs'), findsOneWidget);
+    expect(find.text('1 product'), findsOneWidget);
+    expect(find.text('₱100'), findsOneWidget);
+    expect(GroceryListData.lists.length, 1);
+    expect(ShoppingData.currentProducts, isEmpty);
+  });
+
+  testWidgets('edits a saved grocery list and its product', (tester) async {
+    GroceryListData.lists.add({
+      'id': 1,
+      'name': 'Weekly Needs',
+      'products': [
+        {
+          'productName': 'Rice',
+          'productPrice': 50.0,
+          'quantity': 2,
+          'totalAmount': 100.0,
+        },
+      ],
+    });
+    GroceryListData.nextId = 2;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/create-list': (_) => const ListCreationScreen(),
+          '/list-product': (_) => const ListProductScreen(),
+        },
+        home: const ShopScreen(),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('grocery-list-row-0')));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit Grocery List'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('grocery-list-name')),
+      'Weekend Needs',
+    );
+    await tester.tap(find.byKey(const Key('edit-list-product-0')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('list-product-quantity')), '3');
+    await tester.tap(find.byKey(const Key('list-product-save')));
+    await tester.pumpAndSettle();
+    expect(find.text('Estimated Total: ₱150'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('save-grocery-list')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Weekend Needs'), findsOneWidget);
+    expect(find.text('₱150'), findsOneWidget);
+    expect(GroceryListData.lists.length, 1);
+    expect(GroceryListData.lists[0]['name'], 'Weekend Needs');
+  });
+
+  testWidgets('validates duplicate list and product names', (tester) async {
+    GroceryListData.lists.add({
+      'id': 1,
+      'name': 'Weekly Needs',
+      'products': [
+        {
+          'productName': 'Rice',
+          'productPrice': 50.0,
+          'quantity': 1,
+          'totalAmount': 50.0,
+        },
+      ],
+    });
+    GroceryListData.nextId = 2;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/list-product': (_) => const ListProductScreen()},
+        home: const ListCreationScreen(),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('grocery-list-name')),
+      ' weekly needs ',
+    );
+    await tester.tap(find.byKey(const Key('save-grocery-list')));
+    await tester.pump();
+    expect(find.text('A list with this name already exists.'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('add-list-product')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('list-product-name')), 'Milk');
+    await tester.enterText(find.byKey(const Key('list-product-price')), '80');
+    await tester.enterText(find.byKey(const Key('list-product-quantity')), '1');
+    await tester.tap(find.byKey(const Key('list-product-save')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('add-list-product')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('list-product-name')),
+      ' milk ',
+    );
+    await tester.enterText(find.byKey(const Key('list-product-price')), '90');
+    await tester.enterText(find.byKey(const Key('list-product-quantity')), '1');
+    await tester.tap(find.byKey(const Key('list-product-save')));
+    await tester.pump();
+    expect(find.text('Product name already exists.'), findsOneWidget);
+  });
+
+  testWidgets('removing a list product requires confirmation', (tester) async {
+    GroceryListData.lists.add({
+      'id': 1,
+      'name': 'Market List',
+      'products': [
+        {
+          'productName': 'Bread',
+          'productPrice': 40.0,
+          'quantity': 1,
+          'totalAmount': 40.0,
+        },
+      ],
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/create-list': (_) => const ListCreationScreen()},
+        home: Builder(
+          builder: (context) {
+            return Scaffold(
+              body: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/create-list',
+                    arguments: {'listId': 1},
+                  );
+                },
+                child: const Text('Open List'),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open List'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('remove-list-product-0')));
+    await tester.pumpAndSettle();
+    expect(find.text('Remove Bread from this grocery list?'), findsOneWidget);
+    expect(find.text('1 product'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('confirm-remove-list-product')));
+    await tester.pumpAndSettle();
+    expect(find.text('0 products'), findsOneWidget);
+    expect(find.text('Estimated Total: ₱0'), findsOneWidget);
+    expect(GroceryListData.lists[0]['products'], isNotEmpty);
+  });
+
+  testWidgets('discarding list edits preserves the saved list', (tester) async {
+    GroceryListData.lists.add({
+      'id': 1,
+      'name': 'Original List',
+      'products': [
+        {
+          'productName': 'Bread',
+          'productPrice': 40.0,
+          'quantity': 1,
+          'totalAmount': 40.0,
+        },
+      ],
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/create-list': (_) => const ListCreationScreen()},
+        home: Builder(
+          builder: (context) {
+            return Scaffold(
+              body: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/create-list',
+                    arguments: {'listId': 1},
+                  );
+                },
+                child: const Text('Open List'),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open List'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('grocery-list-name')),
+      'Changed List',
+    );
+    await tester.tap(find.byKey(const Key('list-creation-back-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('keep-editing-list')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ListCreationScreen), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('list-creation-back-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('discard-list-changes')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open List'), findsOneWidget);
+    expect(GroceryListData.lists[0]['name'], 'Original List');
+  });
+
+  testWidgets('invalid grocery list route shows a safe error', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/create-list': (_) => const ListCreationScreen()},
+        home: Builder(
+          builder: (context) {
+            return Scaffold(
+              body: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/create-list',
+                    arguments: {'listId': 999},
+                  );
+                },
+                child: const Text('Open Missing'),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open Missing'));
+    await tester.pumpAndSettle();
+    expect(find.text('List not found'), findsOneWidget);
+    expect(GroceryListData.lists, isEmpty);
+  });
+
+  testWidgets('empty grocery list fields show inline errors', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: ListCreationScreen()));
+
+    await tester.tap(find.byKey(const Key('save-grocery-list')));
+    await tester.pump();
+
+    expect(find.text('List name is required.'), findsOneWidget);
+    expect(
+      find.text('Add at least one product before saving.'),
+      findsOneWidget,
+    );
+    expect(GroceryListData.lists, isEmpty);
+  });
+
+  testWidgets('invalid list product arguments show a safe error', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/list-product': (_) => const ListProductScreen()},
+        home: Builder(
+          builder: (context) {
+            return Scaffold(
+              body: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/list-product',
+                    arguments: {'products': 'invalid'},
+                  );
+                },
+                child: const Text('Open Product'),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open Product'));
+    await tester.pumpAndSettle();
+    expect(find.text('Product form could not be opened.'), findsOneWidget);
+    expect(find.text('Back to List'), findsOneWidget);
+  });
+
+  testWidgets('system back asks before discarding list changes', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/create-list': (_) => const ListCreationScreen()},
+        home: Builder(
+          builder: (context) {
+            return Scaffold(
+              body: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/create-list');
+                },
+                child: const Text('Create List Test'),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Create List Test'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('grocery-list-name')),
+      'Unsaved List',
+    );
+    await tester.pump();
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('discard-list-changes')));
+    await tester.pumpAndSettle();
+    expect(find.text('Create List Test'), findsOneWidget);
+    expect(GroceryListData.lists, isEmpty);
+  });
+
+  testWidgets('grocery list screens fit narrow and wide layouts', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 568);
+    tester.platformDispatcher.textScaleFactorTestValue = 1.2;
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/list-product': (_) => const ListProductScreen()},
+        home: const ListCreationScreen(),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('save-grocery-list')), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const Key('add-list-product')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('add-list-product')));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('list-product-save')), findsOneWidget);
+
+    tester.view.physicalSize = const Size(900, 800);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Home renders populated history and summed spending', (

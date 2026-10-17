@@ -4,11 +4,15 @@ import '../globs/activeuser.dart';
 import '../models/app_preferences.dart';
 import '../services/shopping_history_repository.dart';
 import '../services/user_preferences.dart';
-import '../widgets/trolly_bottom_navigation.dart';
 
 const _trollyGreen = Color(0xFF16A34A);
 const _trollyMint = Color(0xFFE3F5EA);
+const _trollyMintBorder = Color(0xFFC9E9D4);
 const _trollyOrange = Color(0xFFFF9D00);
+const _trollyText = Color(0xFF171717);
+const _trollySecondaryText = Color(0xFF616161);
+const _trollyBorder = Color(0xFFD8D8D8);
+const _fieldFill = Color(0xFFF5F5F5);
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
@@ -148,20 +152,83 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ).showSnackBar(const SnackBar(content: Text('Shopping history cleared.')));
   }
 
-  void _handleNavigation(TrollyNavItem item) {
-    if (item == TrollyNavItem.home) {
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop(_hasChanges);
-      } else {
-        Navigator.of(context).pushReplacementNamed('/home');
-      }
-    }
+  void _openHome() {
+    Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+  }
+
+  Widget _buildBottomNavigation(BuildContext context, double uiScale) {
+    return Container(
+      height: 68 * uiScale,
+      padding: EdgeInsets.symmetric(horizontal: 8 * uiScale),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFD8D8D8)),
+        borderRadius: BorderRadius.circular(34),
+      ),
+      child: Row(
+        children: [
+          _buildNavigationItem(
+            icon: Icons.home_rounded,
+            label: 'Home',
+            uiScale: uiScale,
+            onTap: _openHome,
+          ),
+          _buildNavigationItem(
+            icon: Icons.shopping_cart_outlined,
+            label: 'Shop',
+            uiScale: uiScale,
+            onTap: () => Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil('/shop', (route) => false),
+          ),
+          _buildNavigationItem(
+            icon: Icons.settings_outlined,
+            label: 'Settings',
+            active: true,
+            uiScale: uiScale,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavigationItem({
+    required IconData icon,
+    required String label,
+    required double uiScale,
+    bool active = false,
+    VoidCallback? onTap,
+  }) {
+    final color = active ? _trollyGreen : Colors.black45;
+    return Expanded(
+      child: InkWell(
+        key: Key('settings-navigation-${label.toLowerCase()}'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 27 * uiScale, color: color),
+            SizedBox(height: 2 * uiScale),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 12 * uiScale,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                height: 1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final uiScale = (MediaQuery.sizeOf(context).width / 270)
-        .clamp(1.0, 1.35)
+    final uiScale = (MediaQuery.sizeOf(context).width / 390)
+        .clamp(0.9, 1.1)
         .toDouble();
 
     return PopScope<bool>(
@@ -174,59 +241,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              10 * uiScale,
-              12 * uiScale,
-              10 * uiScale,
-              10 * uiScale,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Settings',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 17 * uiScale,
-                    fontWeight: FontWeight.w800,
-                  ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  18 * uiScale,
+                  16 * uiScale,
+                  18 * uiScale,
+                  16 * uiScale,
                 ),
-                SizedBox(height: 3 * uiScale),
-                Text(
-                  'Personalize your Trolly experience',
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 8 * uiScale,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHeader(uiScale),
+                    SizedBox(height: 12 * uiScale),
+                    Expanded(
+                      child: _isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: _trollyGreen,
+                              ),
+                            )
+                          : SingleChildScrollView(
+                              padding: EdgeInsets.only(bottom: 12 * uiScale),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildProfileSection(uiScale),
+                                  SizedBox(height: 12 * uiScale),
+                                  _buildPreferencesSection(uiScale),
+                                  SizedBox(height: 12 * uiScale),
+                                  _buildDataSection(uiScale),
+                                ],
+                              ),
+                            ),
+                    ),
+                    SizedBox(height: 10 * uiScale),
+                    _buildBottomNavigation(context, uiScale),
+                  ],
                 ),
-                SizedBox(height: 14 * uiScale),
-                Expanded(
-                  child: _isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(color: _trollyGreen),
-                        )
-                      : SingleChildScrollView(
-                          padding: EdgeInsets.only(bottom: 12 * uiScale),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _buildProfileSection(uiScale),
-                              SizedBox(height: 14 * uiScale),
-                              _buildPreferencesSection(uiScale),
-                              SizedBox(height: 14 * uiScale),
-                              _buildDataSection(uiScale),
-                            ],
-                          ),
-                        ),
-                ),
-                SizedBox(height: 10 * uiScale),
-                TrollyBottomNavigation(
-                  activeItem: TrollyNavItem.settings,
-                  onItemTap: _handleNavigation,
-                  uiScale: uiScale,
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -234,9 +289,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _buildHeader(double uiScale) {
+    return Row(
+      children: [
+        Container(
+          width: 48 * uiScale,
+          height: 48 * uiScale,
+          decoration: BoxDecoration(
+            color: _trollyMint,
+            border: Border.all(color: _trollyMintBorder),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.tune_rounded,
+            color: _trollyGreen,
+            size: 25 * uiScale,
+          ),
+        ),
+        SizedBox(width: 12 * uiScale),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Settings',
+                style: TextStyle(
+                  color: _trollyText,
+                  fontSize: 24 * uiScale,
+                  fontWeight: FontWeight.w800,
+                  height: 1.1,
+                ),
+              ),
+              SizedBox(height: 3 * uiScale),
+              Text(
+                'Personalize your Trolly experience',
+                style: TextStyle(
+                  color: _trollySecondaryText,
+                  fontSize: 13 * uiScale,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildProfileSection(double uiScale) {
     return _buildSection(
       title: 'Profile',
+      icon: Icons.person_outline_rounded,
       uiScale: uiScale,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -245,11 +348,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             'Your name',
             style: TextStyle(
               color: Colors.black87,
-              fontSize: 9 * uiScale,
+              fontSize: 13 * uiScale,
               fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(height: 6 * uiScale),
+          SizedBox(height: 5 * uiScale),
           TextField(
             controller: _nameController,
             textInputAction: TextInputAction.done,
@@ -277,26 +380,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
             decoration: InputDecoration(
               hintText: 'Enter your name',
+              prefixIcon: Icon(
+                Icons.person_outline_rounded,
+                color: _trollySecondaryText,
+                size: 20 * uiScale,
+              ),
               errorText: _nameError,
               filled: true,
-              fillColor: Colors.white,
+              fillColor: _fieldFill,
               contentPadding: EdgeInsets.symmetric(
-                horizontal: 10 * uiScale,
+                horizontal: 14 * uiScale,
                 vertical: 8 * uiScale,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFD8D8D8)),
+                borderSide: const BorderSide(color: _trollyBorder),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFD8D8D8)),
+                borderSide: const BorderSide(color: _trollyBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: _trollyGreen, width: 1.5),
               ),
             ),
           ),
-          SizedBox(height: 9 * uiScale),
+          SizedBox(height: 6 * uiScale),
           SizedBox(
-            height: 34 * uiScale,
+            height: 40 * uiScale,
             child: ElevatedButton(
               onPressed: _isSavingName ? null : _saveName,
               style: ElevatedButton.styleFrom(
@@ -319,7 +431,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : Text(
                       'Save Name',
                       style: TextStyle(
-                        fontSize: 9 * uiScale,
+                        fontSize: 14 * uiScale,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -333,6 +445,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildPreferencesSection(double uiScale) {
     return _buildSection(
       title: 'Shopping Preferences',
+      icon: Icons.shopping_basket_outlined,
       uiScale: uiScale,
       child: Column(
         children: [
@@ -340,7 +453,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             initialValue: _currency,
             decoration: const InputDecoration(
               labelText: 'Currency',
+              prefixIcon: Icon(Icons.payments_outlined),
               border: OutlineInputBorder(),
+              filled: true,
+              fillColor: _fieldFill,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 15,
+              ),
             ),
             items: TrollyCurrency.values
                 .map(
@@ -352,12 +472,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 .toList(),
             onChanged: _changeCurrency,
           ),
-          SizedBox(height: 10 * uiScale),
+          SizedBox(height: 6 * uiScale),
           DropdownButtonFormField<ShoppingMode>(
             initialValue: _shoppingMode,
             decoration: const InputDecoration(
               labelText: 'Default shopping mode',
+              prefixIcon: Icon(Icons.route_outlined),
               border: OutlineInputBorder(),
+              filled: true,
+              fillColor: _fieldFill,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 15,
+              ),
             ),
             items: ShoppingMode.values
                 .map(
@@ -375,6 +502,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildDataSection(double uiScale) {
     return _buildSection(
       title: 'Data',
+      icon: Icons.storage_outlined,
       uiScale: uiScale,
       child: SizedBox(
         width: double.infinity,
@@ -385,7 +513,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: OutlinedButton.styleFrom(
             foregroundColor: _trollyOrange,
             side: const BorderSide(color: _trollyOrange),
-            padding: EdgeInsets.symmetric(vertical: 9 * uiScale),
+            padding: EdgeInsets.symmetric(vertical: 14 * uiScale),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
           ),
         ),
       ),
@@ -394,28 +525,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildSection({
     required String title,
+    required IconData icon,
     required Widget child,
     required double uiScale,
   }) {
     return Container(
-      padding: EdgeInsets.all(11 * uiScale),
+      padding: EdgeInsets.all(10 * uiScale),
       decoration: BoxDecoration(
         color: _trollyMint,
-        border: Border.all(color: const Color(0xFFC9E9D4)),
-        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: _trollyMintBorder),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 11 * uiScale,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              Icon(icon, color: _trollyGreen, size: 21 * uiScale),
+              SizedBox(width: 7 * uiScale),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: _trollyText,
+                    fontSize: 15 * uiScale,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 9 * uiScale),
+          SizedBox(height: 6 * uiScale),
           child,
         ],
       ),

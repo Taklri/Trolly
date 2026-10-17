@@ -7,6 +7,10 @@ class ShoppingHistoryEntry {
     required this.title,
     required this.totalCentavos,
     this.currencyCode = 'PHP',
+    this.products,
+    this.hasBudget,
+    this.startingBudgetCentavos,
+    this.budgetLeftCentavos,
   });
 
   final String id;
@@ -16,6 +20,12 @@ class ShoppingHistoryEntry {
   final String currencyCode;
 
   TrollyCurrency get currency => trollyCurrencyFromCode(currencyCode);
+  final List<Map<String, dynamic>>? products;
+  final bool? hasBudget;
+  final int? startingBudgetCentavos;
+  final int? budgetLeftCentavos;
+
+  bool get hasFullDetails => products != null;
 
   Map<String, dynamic> toJson() {
     return {
@@ -24,6 +34,10 @@ class ShoppingHistoryEntry {
       'title': title,
       'totalCentavos': totalCentavos,
       'currencyCode': currency.code,
+      'products': products,
+      'hasBudget': hasBudget,
+      'startingBudgetCentavos': startingBudgetCentavos,
+      'budgetLeftCentavos': budgetLeftCentavos,
     };
   }
 
@@ -33,12 +47,26 @@ class ShoppingHistoryEntry {
     final title = json['title'];
     final totalCentavos = json['totalCentavos'];
     final currencyCode = json['currencyCode'];
+    final savedProducts = json['products'];
+    final savedHasBudget = json['hasBudget'];
+    final savedStartingBudget = json['startingBudgetCentavos'];
+    final savedBudgetLeft = json['budgetLeftCentavos'];
 
     if (id is! String ||
         completedAt is! String ||
         title is! String ||
         totalCentavos is! num) {
       throw const FormatException('Invalid shopping history entry.');
+    }
+
+    List<Map<String, dynamic>>? products;
+    if (savedProducts is List) {
+      products = [];
+      for (int i = 0; i < savedProducts.length; i++) {
+        if (savedProducts[i] is Map<String, dynamic>) {
+          products.add(Map<String, dynamic>.from(savedProducts[i]));
+        }
+      }
     }
 
     return ShoppingHistoryEntry(
@@ -49,6 +77,14 @@ class ShoppingHistoryEntry {
       currencyCode: trollyCurrencyFromCode(
         currencyCode is String ? currencyCode : null,
       ).code,
+      products: products,
+      hasBudget: savedHasBudget is bool ? savedHasBudget : null,
+      startingBudgetCentavos: savedStartingBudget is num
+          ? savedStartingBudget.toInt()
+          : null,
+      budgetLeftCentavos: savedBudgetLeft is num
+          ? savedBudgetLeft.toInt()
+          : null,
     );
   }
 }
