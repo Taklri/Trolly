@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../globs/grocery_lists.dart';
+import '../models/app_preferences.dart';
+import '../services/currency_service.dart';
+import '../services/user_preferences.dart';
 
 const _trollyGreen = Color(0xFF16A34A);
 const _trollyOrange = Color(0xFFFF9D00);
@@ -30,6 +33,8 @@ class ListCreationPage extends State<ListCreationScreen> {
   String originalName = '';
   String nameErr = '';
   String productsErr = '';
+  TrollyCurrency listCurrency = TrollyCurrency.php;
+  bool currencyLoaded = false;
 
   @override
   void didChangeDependencies() {
@@ -56,6 +61,8 @@ class ListCreationPage extends State<ListCreationScreen> {
           Map<String, dynamic> savedList =
               GroceryListData.lists[savedListIndex];
           originalName = savedList['name'].toString();
+          listCurrency = GroceryListData.currencyFor(savedList);
+          currencyLoaded = true;
           listNameController.text = originalName;
           draftProducts = copyProducts(savedList['products']);
           originalProducts = copyProducts(savedList['products']);
@@ -65,7 +72,31 @@ class ListCreationPage extends State<ListCreationScreen> {
       }
 
       loaded = true;
+
+      if (invalidList == false && listId == null) {
+        loadNewListCurrency();
+      }
     }
+  }
+
+  Future<void> loadNewListCurrency() async {
+    TrollyCurrency currency = await const UserPreferences().readCurrency();
+    if (!mounted) return;
+
+    setState(() {
+      listCurrency = currency;
+      currencyLoaded = true;
+    });
+  }
+
+  Future<void> ensureCurrencyLoaded() async {
+    if (currencyLoaded) return;
+
+    TrollyCurrency currency = await const UserPreferences().readCurrency();
+    if (!mounted) return;
+
+    listCurrency = currency;
+    currencyLoaded = true;
   }
 
   List<Map<String, dynamic>> copyProducts(dynamic source) {
@@ -131,29 +162,36 @@ class ListCreationPage extends State<ListCreationScreen> {
   }
 
   String money(double amount) {
-    if (amount == amount.roundToDouble()) return amount.toStringAsFixed(0);
-    return amount.toStringAsFixed(2);
+    if (amount == 0) return '${listCurrency.symbol}0';
+
+    return CurrencyService.formatMinorUnits(
+      (amount * 100).round(),
+      listCurrency,
+    );
   }
 
-  void openProductForm({int? index}) {
-    Navigator.pushNamed(
+  Future<void> openProductForm({int? index}) async {
+    await ensureCurrencyLoaded();
+    if (!mounted) return;
+
+    dynamic result = await Navigator.pushNamed(
       context,
       '/list-product',
       arguments: {
         'products': copyProducts(draftProducts),
         'productIndex': index,
+        'currencyCode': listCurrency.code,
       },
-    ).then((result) {
-      if (mounted == false || result is! Map<String, dynamic>) return;
+    );
+    if (mounted == false || result is! Map<String, dynamic>) return;
 
-      setState(() {
-        if (index == null) {
-          draftProducts.add(Map<String, dynamic>.from(result));
-        } else {
-          draftProducts[index] = Map<String, dynamic>.from(result);
-        }
-        productsErr = '';
-      });
+    setState(() {
+      if (index == null) {
+        draftProducts.add(Map<String, dynamic>.from(result));
+      } else {
+        draftProducts[index] = Map<String, dynamic>.from(result);
+      }
+      productsErr = '';
     });
   }
 
@@ -242,7 +280,7 @@ class ListCreationPage extends State<ListCreationScreen> {
     );
   }
 
-  void saveList() {
+  Future<void> saveList() async {
     String name = listNameController.text.trim();
 
     setState(() {
@@ -258,10 +296,14 @@ class ListCreationPage extends State<ListCreationScreen> {
 
     if (nameErr.isNotEmpty || productsErr.isNotEmpty) return;
 
+    await ensureCurrencyLoaded();
+    if (!mounted) return;
+
     Map<String, dynamic> savedList = {
       'id': listId ?? GroceryListData.nextId,
       'name': name,
       'products': copyProducts(draftProducts),
+      'currencyCode': listCurrency.code,
     };
 
     if (listId == null) {
@@ -303,7 +345,7 @@ class ListCreationPage extends State<ListCreationScreen> {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '₱${money(price)} × ${product['quantity']}',
+                  '${money(price)} × ${product['quantity']}',
                   style: const TextStyle(
                     color: _trollySecondaryText,
                     fontSize: 13,
@@ -311,7 +353,7 @@ class ListCreationPage extends State<ListCreationScreen> {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '₱${money(total)}',
+                  money(total),
                   style: const TextStyle(
                     color: _trollyGreen,
                     fontSize: 15,
@@ -462,7 +504,7 @@ class ListCreationPage extends State<ListCreationScreen> {
                             ),
                           ),
                           Text(
-                            'Estimated Total: ₱${money(listTotal())}',
+                            'Estimated Total: ${money(listTotal())}',
                             key: const Key('grocery-list-total'),
                             style: const TextStyle(
                               color: _trollyText,
@@ -535,7 +577,9 @@ class ListCreationPage extends State<ListCreationScreen> {
                         height: 52,
                         child: OutlinedButton.icon(
                           key: const Key('add-list-product'),
-                          onPressed: openProductForm,
+                          onPressed: () {
+                            openProductForm();
+                          },
                           style: OutlinedButton.styleFrom(
                             foregroundColor: _trollyGreen,
                             side: const BorderSide(color: _trollyGreen),

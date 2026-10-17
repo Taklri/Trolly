@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../models/app_preferences.dart';
+import '../services/currency_service.dart';
+
 const _trollyGreen = Color(0xFF16A34A);
 const _trollyText = Color(0xFF171717);
 const _trollySecondaryText = Color(0xFF616161);
@@ -25,6 +28,7 @@ class ListProductPage extends State<ListProductScreen> {
   String nameErr = '';
   String priceErr = '';
   String quantityErr = '';
+  TrollyCurrency productCurrency = TrollyCurrency.php;
 
   bool validProductMap(dynamic product) {
     return product is Map<String, dynamic> &&
@@ -42,6 +46,10 @@ class ListProductPage extends State<ListProductScreen> {
       dynamic arguments = ModalRoute.of(context)?.settings.arguments;
 
       if (arguments is Map && arguments['products'] is List) {
+        dynamic currencyCode = arguments['currencyCode'];
+        productCurrency = trollyCurrencyFromCode(
+          currencyCode is String ? currencyCode : null,
+        );
         List<dynamic> receivedProducts = arguments['products'];
         bool validProducts = true;
 
@@ -228,8 +236,12 @@ class ListProductPage extends State<ListProductScreen> {
   }
 
   String money(double amount) {
-    if (amount == amount.roundToDouble()) return amount.toStringAsFixed(0);
-    return amount.toStringAsFixed(2);
+    if (amount == 0) return '${productCurrency.symbol}0';
+
+    return CurrencyService.formatMinorUnits(
+      (amount * 100).round(),
+      productCurrency,
+    );
   }
 
   InputDecoration fieldDecoration({String? prefixText}) {
@@ -360,7 +372,9 @@ class ListProductPage extends State<ListProductScreen> {
                               decimal: true,
                             ),
                             onChanged: (value) => fieldChanged('price', value),
-                            decoration: fieldDecoration(prefixText: '₱ '),
+                            decoration: fieldDecoration(
+                              prefixText: '${productCurrency.symbol} ',
+                            ),
                           ),
                           errorText(priceErr),
                           const SizedBox(height: 16),
@@ -395,7 +409,7 @@ class ListProductPage extends State<ListProductScreen> {
                                   ),
                                 ),
                                 Text(
-                                  '₱${money(productTotal())}',
+                                  money(productTotal()),
                                   key: const Key('list-product-total'),
                                   style: const TextStyle(
                                     fontSize: 20,

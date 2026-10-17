@@ -126,7 +126,9 @@ void main() {
     expect(find.byType(SettingsScreen), findsOneWidget);
   });
 
-  testWidgets('Settings saves currency and shopping mode', (tester) async {
+  testWidgets('Settings saves currency without a shopping mode control', (
+    tester,
+  ) async {
     ActiveUser.activeUser = {'fullname': 'Frankie'};
     SharedPreferences.setMockInitialValues({'trolly.user.name': 'Frankie'});
 
@@ -146,16 +148,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text(r'USD ($)'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(DropdownButtonFormField<ShoppingMode>).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Use grocery list'));
-    await tester.pumpAndSettle();
 
     expect(await const UserPreferences().readCurrency(), TrollyCurrency.usd);
-    expect(
-      await const UserPreferences().readShoppingMode(),
-      ShoppingMode.groceryList,
-    );
+    expect(find.text('Default shopping mode'), findsNothing);
   });
 
   testWidgets('Clear Shopping History requires confirmation', (tester) async {
@@ -220,6 +215,28 @@ void main() {
     expect(find.text('₱5000'), findsOneWidget);
     expect(ShoppingData.hasBudget, isTrue);
     expect(ShoppingData.startingBudget, 5000);
+  });
+
+  testWidgets('USD budget accepts currency-prefixed decimal input', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'trolly.preferences.currency': 'USD',
+    });
+
+    await tester.pumpWidget(const TrollyApp());
+    Navigator.of(
+      tester.element(find.byType(GetStartedScreen)),
+    ).pushReplacementNamed('/on-the-go');
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), r'$100.50');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ShoppingScreen), findsOneWidget);
+    expect(ShoppingData.startingBudget, 100.5);
+    expect(find.text(r'$100.50'), findsOneWidget);
   });
 
   testWidgets('skipping budget starts total spending mode', (tester) async {
@@ -861,6 +878,89 @@ void main() {
     await tester.pump();
     expect(find.text('₱100'), findsOneWidget);
     expect(ShoppingData.checkedTotal(), 100);
+  });
+
+  testWidgets('converts a legacy PHP list when USD shopping starts', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'trolly.preferences.currency': 'USD',
+    });
+    GroceryListData.lists.add({
+      'id': 1,
+      'name': 'Snack List',
+      'products': [
+        {
+          'productName': 'M&Ms',
+          'productPrice': 22.0,
+          'quantity': 2,
+          'totalAmount': 44.0,
+        },
+      ],
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {'/shopping': (_) => const ShoppingScreen()},
+        home: const GroceryListSelectionScreen(),
+      ),
+    );
+
+    expect(find.text('₱44'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('grocery-list-select-0')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ShoppingScreen), findsOneWidget);
+    expect(ShoppingData.currentProducts[0]['productPrice'], 0.38);
+    expect(ShoppingData.currentProducts[0]['totalAmount'], 0.76);
+    expect(GroceryListData.lists[0]['products'][0]['productPrice'], 22.0);
+    expect(GroceryListData.lists[0]['products'][0]['totalAmount'], 44.0);
+
+    await tester.tap(find.byKey(const Key('grocery-product-checkbox-0')));
+    await tester.pump();
+    expect(find.text(r'$0.76'), findsOneWidget);
+  });
+
+  testWidgets('new grocery lists store and display the selected currency', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'trolly.preferences.currency': 'USD',
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        routes: {
+          '/create-list': (_) => const ListCreationScreen(),
+          '/list-product': (_) => const ListProductScreen(),
+        },
+        home: const ShopScreen(),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('create-list-button')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('grocery-list-name')),
+      'Dollar List',
+    );
+    await tester.tap(find.byKey(const Key('add-list-product')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('list-product-name')), 'Candy');
+    await tester.enterText(find.byKey(const Key('list-product-price')), '22');
+    await tester.enterText(find.byKey(const Key('list-product-quantity')), '2');
+    await tester.pump();
+
+    expect(find.text(r'$44'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('list-product-save')));
+    await tester.pumpAndSettle();
+    expect(find.text(r'Estimated Total: $44'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('save-grocery-list')));
+    await tester.pumpAndSettle();
+
+    expect(GroceryListData.lists.single['currencyCode'], 'USD');
+    expect(find.text(r'$44'), findsOneWidget);
   });
 
   testWidgets('grocery shopping requires one checked product to finish', (

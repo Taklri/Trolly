@@ -261,7 +261,7 @@ class ShopPage extends State<ShopScreen> {
                     ),
                   ),
                   Text(
-                    '₱${_money(total)}',
+                    GroceryListData.currencyMoney(total, groceryList),
                     style: TextStyle(
                       color: _trollyGreen,
                       fontSize: 15 * uiScale,
@@ -277,11 +277,6 @@ class ShopPage extends State<ShopScreen> {
         );
       },
     );
-  }
-
-  String _money(double amount) {
-    if (amount == amount.roundToDouble()) return amount.toStringAsFixed(0);
-    return amount.toStringAsFixed(2);
   }
 
   Widget _buildBottomNavigation(BuildContext context, double uiScale) {

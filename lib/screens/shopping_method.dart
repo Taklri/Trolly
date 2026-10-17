@@ -27,7 +27,7 @@ class ShoppingMethodPage extends State<ShoppingMethodScreen> {
     await ShoppingData.loadCurrency();
     if (!mounted) return;
 
-    final amount = budgetController.text.replaceAll('₱', '').trim();
+    final amount = numbersOnly(budgetController.text);
     budgetController.text = '${ShoppingData.currency.symbol} $amount';
     budgetController.selection = TextSelection.collapsed(
       offset: budgetController.text.length,
@@ -62,7 +62,7 @@ class ShoppingMethodPage extends State<ShoppingMethodScreen> {
   }
 
   void continueShopping() {
-    String budgetText = budgetController.text.replaceAll('₱', '').trim();
+    String budgetText = numbersOnly(budgetController.text);
     double? budget = double.tryParse(budgetText);
 
     if (budgetText.isEmpty) {
@@ -85,8 +85,7 @@ class ShoppingMethodPage extends State<ShoppingMethodScreen> {
   }
 
   void budgetChanged(String value) {
-    String amount = value.replaceAll('₱', '').trim();
-    amount = numbersOnly(amount);
+    String amount = numbersOnly(value);
     String formattedValue = '${ShoppingData.currency.symbol} $amount';
 
     if (budgetController.text != formattedValue) {
