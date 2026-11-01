@@ -31,7 +31,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _nameController = TextEditingController();
   TrollyCurrency _currency = TrollyCurrency.php;
-  ShoppingMode _shoppingMode = ShoppingMode.onTheGo;
   String? _nameError;
   bool _isLoading = true;
   bool _isSavingName = false;
@@ -53,7 +52,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final values = await Future.wait<Object?>([
       widget.userPreferences.readName(),
       widget.userPreferences.readCurrency(),
-      widget.userPreferences.readShoppingMode(),
     ]);
     if (!mounted) return;
 
@@ -65,7 +63,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     setState(() {
       _currency = values[1] as TrollyCurrency;
-      _shoppingMode = values[2] as ShoppingMode;
       _isLoading = false;
     });
   }
@@ -106,16 +103,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _hasChanges = true;
     });
     await widget.userPreferences.saveCurrency(currency);
-  }
-
-  Future<void> _changeShoppingMode(ShoppingMode? mode) async {
-    if (mode == null || mode == _shoppingMode) return;
-
-    setState(() {
-      _shoppingMode = mode;
-      _hasChanges = true;
-    });
-    await widget.userPreferences.saveShoppingMode(mode);
   }
 
   Future<void> _confirmClearHistory() async {
@@ -471,28 +458,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 )
                 .toList(),
             onChanged: _changeCurrency,
-          ),
-          SizedBox(height: 6 * uiScale),
-          DropdownButtonFormField<ShoppingMode>(
-            initialValue: _shoppingMode,
-            decoration: const InputDecoration(
-              labelText: 'Default shopping mode',
-              prefixIcon: Icon(Icons.route_outlined),
-              border: OutlineInputBorder(),
-              filled: true,
-              fillColor: _fieldFill,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 15,
-              ),
-            ),
-            items: ShoppingMode.values
-                .map(
-                  (mode) =>
-                      DropdownMenuItem(value: mode, child: Text(mode.label)),
-                )
-                .toList(),
-            onChanged: _changeShoppingMode,
           ),
         ],
       ),

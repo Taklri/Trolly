@@ -26,6 +26,25 @@ void main() {
     );
   });
 
+  test('converts major currency units through rounded minor units', () {
+    expect(
+      CurrencyService.convertMajorUnits(
+        22,
+        TrollyCurrency.php,
+        TrollyCurrency.usd,
+      ),
+      0.38,
+    );
+    expect(
+      CurrencyService.convertMajorUnits(
+        44,
+        TrollyCurrency.php,
+        TrollyCurrency.usd,
+      ),
+      0.76,
+    );
+  });
+
   test('formats supported currencies with grouping and decimals', () {
     expect(
       CurrencyService.formatMinorUnits(1400000, TrollyCurrency.php),

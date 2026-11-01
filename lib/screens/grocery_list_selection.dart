@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../globs/grocery_lists.dart';
 import '../globs/shopping.dart';
+import '../services/currency_service.dart';
 
 const _trollyGreen = Color(0xFF16A34A);
 const _trollyText = Color(0xFF171717);
@@ -21,15 +22,40 @@ class GroceryListSelectionPage extends State<GroceryListSelectionScreen> {
     if (mounted) setState(() {});
   }
 
-  void startShopping(int index) {
+  Future<void> startShopping(int index) async {
     Map<String, dynamic> groceryList = GroceryListData.lists[index];
     List<Map<String, dynamic>> products = [];
     dynamic savedProducts = groceryList['products'];
+    final sourceCurrency = GroceryListData.currencyFor(groceryList);
+
+    await ShoppingData.loadCurrency();
+    if (!mounted) return;
+
+    final targetCurrency = ShoppingData.currency;
 
     if (savedProducts is List) {
       for (int i = 0; i < savedProducts.length; i++) {
         if (savedProducts[i] is Map<String, dynamic>) {
-          products.add(Map<String, dynamic>.from(savedProducts[i]));
+          Map<String, dynamic> product = Map<String, dynamic>.from(
+            savedProducts[i],
+          );
+
+          if (product['productPrice'] is num) {
+            product['productPrice'] = CurrencyService.convertMajorUnits(
+              (product['productPrice'] as num).toDouble(),
+              sourceCurrency,
+              targetCurrency,
+            );
+          }
+          if (product['totalAmount'] is num) {
+            product['totalAmount'] = CurrencyService.convertMajorUnits(
+              (product['totalAmount'] as num).toDouble(),
+              sourceCurrency,
+              targetCurrency,
+            );
+          }
+
+          products.add(product);
         }
       }
     }
@@ -54,12 +80,6 @@ class GroceryListSelectionPage extends State<GroceryListSelectionScreen> {
     }
 
     return total;
-  }
-
-  String money(double amount) {
-    return amount == amount.roundToDouble()
-        ? amount.toStringAsFixed(0)
-        : amount.toStringAsFixed(2);
   }
 
   @override
@@ -225,7 +245,10 @@ class GroceryListSelectionPage extends State<GroceryListSelectionScreen> {
                 style: TextStyle(color: _trollySecondaryText, fontSize: 11),
               ),
               Text(
-                '₱ ${money(listTotal(groceryList))}',
+                GroceryListData.currencyMoney(
+                  listTotal(groceryList),
+                  groceryList,
+                ),
                 style: const TextStyle(
                   color: _trollyText,
                   fontWeight: FontWeight.w700,

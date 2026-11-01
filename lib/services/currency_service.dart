@@ -20,6 +20,15 @@ class CurrencyService {
     return (amount * phpCentavosPerUsd / 100).round();
   }
 
+  static double convertMajorUnits(
+    double amount,
+    TrollyCurrency from,
+    TrollyCurrency to,
+  ) {
+    final minorUnits = (amount * 100).round();
+    return convertMinorUnits(minorUnits, from, to) / 100;
+  }
+
   static String formatMinorUnits(int amount, TrollyCurrency currency) {
     final absoluteAmount = amount.abs();
     final majorUnits = absoluteAmount ~/ 100;
